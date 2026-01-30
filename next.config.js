@@ -11,6 +11,10 @@ const nextConfig = {
     // Ignore TypeScript errors during production build
     ignoreBuildErrors: true,
   },
+  experimental: {
+    // Exclude Prisma from server components bundling
+    serverComponentsExternalPackages: ['@prisma/client', 'bcryptjs'],
+  },
 }
 
 module.exports = nextConfig

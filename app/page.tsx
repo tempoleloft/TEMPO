@@ -67,9 +67,8 @@ export default function Home() {
             </Button>
             <Button 
               asChild
-              variant="outline"
               size="lg"
-              className="border-tempo-creme/30 text-tempo-creme hover:bg-tempo-creme/10 px-8 py-6 text-base"
+              className="bg-transparent border-2 border-tempo-creme text-tempo-creme hover:bg-tempo-creme hover:text-tempo-bordeaux px-8 py-6 text-base transition-all"
             >
               <Link href="/studio">Découvrir le studio</Link>
             </Button>

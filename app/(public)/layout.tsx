@@ -1,6 +1,8 @@
 import Link from "next/link"
 import { auth } from "@/lib/auth"
+import { db } from "@/lib/db"
 import { Button } from "@/components/ui/button"
+import { UserMenu } from "@/components/layout/user-menu"
 
 export default async function PublicLayout({
   children,
@@ -8,6 +10,18 @@ export default async function PublicLayout({
   children: React.ReactNode
 }) {
   const session = await auth()
+  
+  // Fetch user profile if logged in
+  let userName = session?.user?.name || null
+  if (session?.user?.id && !userName) {
+    const profile = await db.clientProfile.findUnique({
+      where: { userId: session.user.id },
+      select: { firstName: true, lastName: true },
+    })
+    if (profile) {
+      userName = `${profile.firstName} ${profile.lastName}`
+    }
+  }
   
   const dashboardLink = session?.user?.role === "ADMIN" 
     ? "/admin" 
@@ -39,12 +53,11 @@ export default async function PublicLayout({
           </div>
           <div className="flex items-center gap-4">
             {session ? (
-              <Button 
-                asChild
-                className="bg-tempo-creme text-tempo-bordeaux hover:bg-tempo-taupe"
-              >
-                <Link href={dashboardLink}>Mon espace</Link>
-              </Button>
+              <UserMenu 
+                userName={userName || session.user.email || "Mon compte"} 
+                dashboardLink={dashboardLink}
+                userImage={session.user.image}
+              />
             ) : (
               <>
                 <Link href="/login" className="text-sm hover:opacity-70 transition-opacity">

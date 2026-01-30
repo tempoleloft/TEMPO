@@ -468,6 +468,281 @@ export async function toggleProductActive(productId: string) {
   }
 }
 
+// ============================================================================
+// CLIENT MANAGEMENT (Gestion des clients)
+// ============================================================================
+
+export async function blacklistClient(userId: string, reason: string) {
+  const authSession = await auth()
+  
+  if (!authSession?.user || authSession.user.role !== "ADMIN") {
+    return { success: false, error: "Non autorisé" }
+  }
+
+  try {
+    const user = await db.user.findUnique({
+      where: { id: userId },
+    })
+
+    if (!user) {
+      return { success: false, error: "Client non trouvé" }
+    }
+
+    if (user.role === "ADMIN") {
+      return { success: false, error: "Impossible de blacklister un administrateur" }
+    }
+
+    await db.user.update({
+      where: { id: userId },
+      data: {
+        isBlacklisted: true,
+        blacklistedAt: new Date(),
+        blacklistReason: reason || "Non spécifié",
+      },
+    })
+
+    revalidatePath("/admin/clients")
+    revalidatePath(`/admin/clients/${userId}`)
+    
+    return { success: true }
+  } catch (error) {
+    console.error("Blacklist client error:", error)
+    return { success: false, error: "Erreur lors du blacklist" }
+  }
+}
+
+export async function unblacklistClient(userId: string) {
+  const authSession = await auth()
+  
+  if (!authSession?.user || authSession.user.role !== "ADMIN") {
+    return { success: false, error: "Non autorisé" }
+  }
+
+  try {
+    await db.user.update({
+      where: { id: userId },
+      data: {
+        isBlacklisted: false,
+        blacklistedAt: null,
+        blacklistReason: null,
+      },
+    })
+
+    revalidatePath("/admin/clients")
+    revalidatePath(`/admin/clients/${userId}`)
+    
+    return { success: true }
+  } catch (error) {
+    console.error("Unblacklist client error:", error)
+    return { success: false, error: "Erreur lors du déblacklist" }
+  }
+}
+
+export async function deleteClient(userId: string) {
+  const authSession = await auth()
+  
+  if (!authSession?.user || authSession.user.role !== "ADMIN") {
+    return { success: false, error: "Non autorisé" }
+  }
+
+  try {
+    const user = await db.user.findUnique({
+      where: { id: userId },
+      include: {
+        reservations: { where: { status: "BOOKED" } },
+      },
+    })
+
+    if (!user) {
+      return { success: false, error: "Client non trouvé" }
+    }
+
+    if (user.role === "ADMIN") {
+      return { success: false, error: "Impossible de supprimer un administrateur" }
+    }
+
+    if (user.reservations.length > 0) {
+      return { success: false, error: "Ce client a des réservations actives. Annulez-les d'abord." }
+    }
+
+    // Delete user (cascade will handle related records)
+    await db.user.delete({
+      where: { id: userId },
+    })
+
+    revalidatePath("/admin/clients")
+    
+    return { success: true }
+  } catch (error) {
+    console.error("Delete client error:", error)
+    return { success: false, error: "Erreur lors de la suppression" }
+  }
+}
+
+// ============================================================================
+// SETTINGS (PARAMÈTRES)
+// ============================================================================
+
+export async function getSettings() {
+  // Get or create default settings
+  let settings = await db.settings.findUnique({
+    where: { id: "default" },
+  })
+
+  if (!settings) {
+    settings = await db.settings.create({
+      data: { id: "default" },
+    })
+  }
+
+  return settings
+}
+
+const updateSettingsSchema = z.object({
+  cancelHoursBefore: z.number().int().min(0).max(72).optional(),
+  maxWaitlistSize: z.number().int().min(0).max(10).optional(),
+  defaultCapacity: z.number().int().min(1).max(50).optional(),
+  reminderEnabled: z.boolean().optional(),
+  reminderHoursBefore: z.number().int().min(1).max(72).optional(),
+})
+
+export type UpdateSettingsInput = z.infer<typeof updateSettingsSchema>
+
+export async function updateSettings(data: UpdateSettingsInput) {
+  const authSession = await auth()
+  
+  if (!authSession?.user || authSession.user.role !== "ADMIN") {
+    return { success: false, error: "Non autorisé" }
+  }
+
+  try {
+    const parsed = updateSettingsSchema.safeParse(data)
+    
+    if (!parsed.success) {
+      return { 
+        success: false, 
+        error: parsed.error.errors[0]?.message || "Données invalides" 
+      }
+    }
+
+    // Upsert settings
+    await db.settings.upsert({
+      where: { id: "default" },
+      create: {
+        id: "default",
+        ...parsed.data,
+      },
+      update: parsed.data,
+    })
+
+    revalidatePath("/admin/settings")
+    
+    return { success: true }
+  } catch (error) {
+    console.error("Update settings error:", error)
+    return { success: false, error: "Erreur lors de la mise à jour" }
+  }
+}
+
+// ============================================================================
+// CREATE ADMIN
+// ============================================================================
+
+const createAdminSchema = z.object({
+  email: z.string().email("Email invalide"),
+  password: z.string().min(6, "Mot de passe minimum 6 caractères"),
+  firstName: z.string().min(2, "Prénom requis"),
+  lastName: z.string().min(2, "Nom requis"),
+})
+
+export type CreateAdminInput = z.infer<typeof createAdminSchema>
+
+export async function createAdmin(data: CreateAdminInput) {
+  const authSession = await auth()
+  
+  if (!authSession?.user || authSession.user.role !== "ADMIN") {
+    return { success: false, error: "Non autorisé" }
+  }
+
+  try {
+    const parsed = createAdminSchema.safeParse(data)
+    
+    if (!parsed.success) {
+      return { 
+        success: false, 
+        error: parsed.error.errors[0]?.message || "Données invalides" 
+      }
+    }
+
+    const { email, password, firstName, lastName } = parsed.data
+
+    // Check if user exists
+    const existingUser = await db.user.findUnique({
+      where: { email: email.toLowerCase() },
+    })
+
+    if (existingUser) {
+      return { success: false, error: "Un compte existe déjà avec cet email" }
+    }
+
+    // Hash password
+    const passwordHash = await hash(password, 12)
+
+    // Create admin user
+    await db.user.create({
+      data: {
+        email: email.toLowerCase(),
+        passwordHash,
+        role: "ADMIN",
+        emailVerified: new Date(),
+        clientProfile: {
+          create: {
+            firstName,
+            lastName,
+            phone: "",
+          },
+        },
+        wallet: {
+          create: {
+            creditsBalance: 0,
+          },
+        },
+      },
+    })
+
+    revalidatePath("/admin/settings")
+    
+    return { success: true }
+  } catch (error) {
+    console.error("Create admin error:", error)
+    return { success: false, error: "Erreur lors de la création de l'administrateur" }
+  }
+}
+
+// ============================================================================
+// GET ADMINS LIST
+// ============================================================================
+
+export async function getAdmins() {
+  const admins = await db.user.findMany({
+    where: { role: "ADMIN" },
+    select: {
+      id: true,
+      email: true,
+      createdAt: true,
+      clientProfile: {
+        select: {
+          firstName: true,
+          lastName: true,
+        },
+      },
+    },
+    orderBy: { createdAt: "asc" },
+  })
+
+  return admins
+}
+
 // Reset attendance back to BOOKED
 export async function resetAttendance(reservationId: string) {
   const authSession = await auth()

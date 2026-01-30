@@ -1,11 +1,11 @@
 import { db } from "@/lib/db"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { format } from "date-fns"
 import { fr } from "date-fns/locale"
-import { Search, User, CreditCard, Calendar } from "lucide-react"
+import { Search, User, Eye, Ban } from "lucide-react"
 import Link from "next/link"
 
 interface PageProps {
@@ -27,34 +27,36 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
     include: {
       clientProfile: true,
       wallet: true,
-      reservations: {
-        where: { status: "BOOKED" },
-      },
+      reservations: true,
       purchases: {
         where: { status: "PAID" },
-        orderBy: { createdAt: "desc" },
-        take: 1,
       },
     },
     orderBy: { createdAt: "desc" },
     take: 100,
   })
 
+  const totalClients = clients.length
+  const blacklistedCount = clients.filter(c => c.isBlacklisted).length
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-tempo-bordeaux">Clients</h1>
-          <p className="text-muted-foreground mt-1">
-            {clients.length} client{clients.length > 1 ? "s" : ""} enregistré{clients.length > 1 ? "s" : ""}
-          </p>
-        </div>
+      <div>
+        <h1 className="text-3xl font-bold text-tempo-bordeaux">Clients</h1>
+        <p className="text-muted-foreground mt-1">
+          {totalClients} client{totalClients > 1 ? "s" : ""} enregistré{totalClients > 1 ? "s" : ""}
+          {blacklistedCount > 0 && (
+            <span className="text-red-600 ml-2">
+              ({blacklistedCount} blacklisté{blacklistedCount > 1 ? "s" : ""})
+            </span>
+          )}
+        </p>
       </div>
 
       {/* Search */}
-      <form className="flex gap-4">
-        <div className="relative flex-1 max-w-md">
+      <form className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             name="q"
@@ -63,18 +65,20 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
             className="pl-10"
           />
         </div>
-        <Button type="submit" variant="outline">Rechercher</Button>
-        {query && (
-          <Button asChild variant="ghost">
-            <Link href="/admin/clients">Effacer</Link>
-          </Button>
-        )}
+        <div className="flex gap-2">
+          <Button type="submit" variant="outline">Rechercher</Button>
+          {query && (
+            <Button asChild variant="ghost">
+              <Link href="/admin/clients">Effacer</Link>
+            </Button>
+          )}
+        </div>
       </form>
 
       {/* Clients List */}
       <Card>
-        <CardHeader>
-          <CardTitle>Liste des clients</CardTitle>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg">Liste des clients</CardTitle>
         </CardHeader>
         <CardContent>
           {clients.length === 0 ? (
@@ -83,49 +87,80 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
               <p>Aucun client trouvé</p>
             </div>
           ) : (
-            <div className="space-y-3">
-              {clients.map((client) => (
-                <div
-                  key={client.id}
-                  className="flex items-center justify-between p-4 rounded-lg bg-tempo-taupe/10 hover:bg-tempo-taupe/20 transition-colors"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-tempo-bordeaux text-tempo-creme flex items-center justify-center font-semibold">
-                      {client.clientProfile?.firstName?.charAt(0) || "?"}
-                      {client.clientProfile?.lastName?.charAt(0) || ""}
-                    </div>
-                    <div>
-                      <p className="font-semibold">
-                        {client.clientProfile?.firstName} {client.clientProfile?.lastName}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {client.email}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-6">
-                    <div className="text-center">
-                      <p className="text-xs text-muted-foreground">Crédits</p>
-                      <Badge variant="secondary" className="mt-1">
-                        {client.wallet?.creditsBalance || 0}
-                      </Badge>
-                    </div>
-                    
-                    <div className="text-center">
-                      <p className="text-xs text-muted-foreground">Réservations</p>
-                      <p className="font-semibold">{client.reservations.length}</p>
-                    </div>
-                    
-                    <div className="text-right w-32">
-                      <p className="text-xs text-muted-foreground">Inscrit le</p>
-                      <p className="text-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b text-left text-sm text-muted-foreground">
+                    <th className="pb-3 font-medium">Client</th>
+                    <th className="pb-3 font-medium text-center hidden sm:table-cell">Crédits</th>
+                    <th className="pb-3 font-medium text-center hidden md:table-cell">Réservations</th>
+                    <th className="pb-3 font-medium hidden lg:table-cell">Inscrit le</th>
+                    <th className="pb-3 font-medium text-center">Statut</th>
+                    <th className="pb-3 font-medium text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {clients.map((client) => (
+                    <tr 
+                      key={client.id}
+                      className={`hover:bg-muted/50 ${client.isBlacklisted ? "bg-red-50" : ""}`}
+                    >
+                      <td className="py-3">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold shrink-0 ${
+                            client.isBlacklisted 
+                              ? "bg-red-100 text-red-700" 
+                              : "bg-tempo-bordeaux text-tempo-creme"
+                          }`}>
+                            {client.clientProfile?.firstName?.charAt(0) || "?"}
+                            {client.clientProfile?.lastName?.charAt(0) || ""}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-medium truncate">
+                              {client.clientProfile?.firstName || ""} {client.clientProfile?.lastName || ""}
+                              {!client.clientProfile?.firstName && client.name}
+                            </p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {client.email}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-3 text-center hidden sm:table-cell">
+                        <Badge variant="secondary">
+                          {client.wallet?.creditsBalance || 0}
+                        </Badge>
+                      </td>
+                      <td className="py-3 text-center hidden md:table-cell">
+                        {client.reservations.length}
+                      </td>
+                      <td className="py-3 text-sm text-muted-foreground hidden lg:table-cell">
                         {format(client.createdAt, "d MMM yyyy", { locale: fr })}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                      </td>
+                      <td className="py-3 text-center">
+                        {client.isBlacklisted ? (
+                          <Badge variant="destructive" className="text-xs">
+                            <Ban className="h-3 w-3 mr-1" />
+                            Blacklisté
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-xs text-green-700 border-green-300">
+                            Actif
+                          </Badge>
+                        )}
+                      </td>
+                      <td className="py-3 text-right">
+                        <Button asChild size="sm" variant="ghost">
+                          <Link href={`/admin/clients/${client.id}`}>
+                            <Eye className="h-4 w-4 mr-1" />
+                            Voir
+                          </Link>
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </CardContent>

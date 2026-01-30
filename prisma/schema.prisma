@@ -62,8 +62,15 @@ model User {
   passwordHash  String?
   emailVerified DateTime?
   role          Role      @default(CLIENT)
+  isBlacklisted Boolean   @default(false)
+  blacklistedAt DateTime?
+  blacklistReason String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+
+  // OAuth fields (required by NextAuth PrismaAdapter)
+  name          String?
+  image         String?
 
   // Relations
   clientProfile  ClientProfile?
@@ -348,4 +355,18 @@ model CreditLedger {
   @@index([userId])
   @@index([createdAt])
   @@index([refType, refId])
+}
+
+// ============================================================================
+// SETTINGS (Paramètres du studio)
+// ============================================================================
+
+model Settings {
+  id                    String   @id @default("default")
+  cancelHoursBefore     Int      @default(12)       // Délai d'annulation en heures
+  maxWaitlistSize       Int      @default(3)        // Nombre max en liste d'attente
+  defaultCapacity       Int      @default(12)       // Capacité par défaut des cours
+  reminderEnabled       Boolean  @default(false)    // Rappel 24h avant le cours
+  reminderHoursBefore   Int      @default(24)       // Heures avant pour le rappel
+  updatedAt             DateTime @updatedAt
 }

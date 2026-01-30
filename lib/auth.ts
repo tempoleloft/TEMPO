@@ -2,6 +2,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter"
 import { compare } from "bcryptjs"
 import NextAuth, { type DefaultSession, type NextAuthConfig } from "next-auth"
 import Credentials from "next-auth/providers/credentials"
+import Google from "next-auth/providers/google"
 import { z } from "zod"
 
 import { db } from "@/lib/db"
@@ -43,6 +44,13 @@ export const authConfig: NextAuthConfig = {
     error: "/login",
   },
   providers: [
+    // Google OAuth
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      allowDangerousEmailAccountLinking: true,
+    }),
+    // Email/Password
     Credentials({
       name: "credentials",
       credentials: {
@@ -93,10 +101,55 @@ export const authConfig: NextAuthConfig = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async signIn({ user, account, profile }) {
+      // For Google OAuth, create client profile if it doesn't exist
+      if (account?.provider === "google") {
+        const existingUser = await db.user.findUnique({
+          where: { email: user.email! },
+          include: { clientProfile: true, wallet: true },
+        })
+
+        if (existingUser) {
+          // User exists, check if they need a client profile
+          if (!existingUser.clientProfile) {
+            // Extract name from profile
+            const firstName = (profile as { given_name?: string })?.given_name || user.name?.split(" ")[0] || ""
+            const lastName = (profile as { family_name?: string })?.family_name || user.name?.split(" ").slice(1).join(" ") || ""
+            
+            await db.clientProfile.create({
+              data: {
+                userId: existingUser.id,
+                firstName,
+                lastName,
+                phone: "", // Will need to be filled later
+              },
+            })
+          }
+          if (!existingUser.wallet) {
+            await db.wallet.create({
+              data: {
+                userId: existingUser.id,
+                creditsBalance: 0,
+              },
+            })
+          }
+        }
+      }
+      return true
+    },
+    async jwt({ token, user, account }) {
       if (user) {
         token.id = user.id
-        token.role = user.role
+        // For OAuth, fetch the role from the database
+        if (account?.provider === "google") {
+          const dbUser = await db.user.findUnique({
+            where: { id: user.id },
+            select: { role: true },
+          })
+          token.role = dbUser?.role || "CLIENT"
+        } else {
+          token.role = user.role
+        }
       }
       return token
     },
@@ -108,11 +161,38 @@ export const authConfig: NextAuthConfig = {
       return session
     },
     async redirect({ url, baseUrl }) {
-      // Redirect to appropriate dashboard based on role after login
+      // If the URL is the base URL (home page), redirect to dashboard
+      if (url === baseUrl || url === baseUrl + "/") {
+        return `${baseUrl}/app`
+      }
+      // Allow callback URLs within the app
       if (url.startsWith(baseUrl)) {
         return url
       }
-      return baseUrl
+      // Default to client dashboard
+      return `${baseUrl}/app`
+    },
+  },
+  events: {
+    async createUser({ user }) {
+      // When a new user is created via OAuth, set them as CLIENT and create wallet
+      await db.user.update({
+        where: { id: user.id },
+        data: { role: "CLIENT" },
+      })
+      
+      // Create wallet if it doesn't exist
+      const existingWallet = await db.wallet.findUnique({
+        where: { userId: user.id },
+      })
+      if (!existingWallet) {
+        await db.wallet.create({
+          data: {
+            userId: user.id,
+            creditsBalance: 0,
+          },
+        })
+      }
     },
   },
 }

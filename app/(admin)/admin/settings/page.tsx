@@ -1,6 +1,8 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { getSettings, getAdmins } from "@/lib/actions/admin"
+
+export const dynamic = 'force-dynamic'
 import { SettingsForm } from "@/components/admin/settings-form"
 import { AddAdminForm } from "@/components/admin/add-admin-form"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"

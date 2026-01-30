@@ -1,6 +1,8 @@
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { format, startOfWeek, endOfWeek, addWeeks, eachDayOfInterval } from "date-fns"
+
+export const dynamic = 'force-dynamic'
 import { fr } from "date-fns/locale"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"

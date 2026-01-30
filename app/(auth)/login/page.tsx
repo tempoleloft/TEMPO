@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, Suspense } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { signIn } from "next-auth/react"
@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { PasswordInput } from "@/components/ui/password-input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Loader2 } from "lucide-react"
 
 // Icons pour les providers
 function GoogleIcon() {
@@ -23,8 +24,7 @@ function GoogleIcon() {
   )
 }
 
-
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get("callbackUrl") || "/app"
@@ -66,110 +66,134 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-tempo-bordeaux flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <Link href="/" className="text-2xl font-bold text-tempo-bordeaux mb-2 block">
-            TEMPO
-          </Link>
-          <CardTitle className="text-xl">Connexion</CardTitle>
-          <CardDescription>
-            Entrez vos identifiants pour accéder à votre compte
-          </CardDescription>
-        </CardHeader>
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
-            {error && (
-              <div className="p-3 text-sm text-red-600 bg-red-50 rounded-md">
-                {error}
+    <Card className="w-full max-w-md">
+      <CardHeader className="text-center">
+        <Link href="/" className="text-2xl font-bold text-tempo-bordeaux mb-2 block">
+          TEMPO
+        </Link>
+        <CardTitle className="text-xl">Connexion</CardTitle>
+        <CardDescription>
+          Entrez vos identifiants pour accéder à votre compte
+        </CardDescription>
+      </CardHeader>
+      <form onSubmit={handleSubmit}>
+        <CardContent className="space-y-4">
+          {error && (
+            <div className="p-3 text-sm text-red-600 bg-red-50 rounded-md">
+              {error}
+            </div>
+          )}
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="vous@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              disabled={isLoading}
+            />
+          </div>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password">Mot de passe</Label>
+              <Link 
+                href="/forgot-password" 
+                className="text-xs text-tempo-bordeaux hover:underline"
+              >
+                Mot de passe oublié ?
+              </Link>
+            </div>
+            {searchParams.get("registered") === "true" && (
+              <div className="p-3 text-sm text-green-600 bg-green-50 rounded-md">
+                Compte créé ! Vérifiez votre email pour activer votre compte.
               </div>
             )}
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="vous@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                disabled={isLoading}
-              />
+            <PasswordInput
+              id="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              disabled={isLoading}
+            />
+          </div>
+        </CardContent>
+        <CardFooter className="flex flex-col gap-4">
+          <Button 
+            type="submit" 
+            className="w-full bg-tempo-bordeaux hover:bg-tempo-noir"
+            disabled={isLoading || isOAuthLoading !== null}
+          >
+            {isLoading ? "Connexion..." : "Se connecter"}
+          </Button>
+          
+          {/* Séparateur */}
+          <div className="relative w-full">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
             </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Mot de passe</Label>
-                <Link 
-                  href="/forgot-password" 
-                  className="text-xs text-tempo-bordeaux hover:underline"
-                >
-                  Mot de passe oublié ?
-                </Link>
-              </div>
-              {searchParams.get("registered") === "true" && (
-                <div className="p-3 text-sm text-green-600 bg-green-50 rounded-md">
-                  Compte créé ! Vérifiez votre email pour activer votre compte.
-                </div>
-              )}
-              <PasswordInput
-                id="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={isLoading}
-              />
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-white px-2 text-muted-foreground">
+                Ou continuer avec
+              </span>
             </div>
-          </CardContent>
-          <CardFooter className="flex flex-col gap-4">
-            <Button 
-              type="submit" 
-              className="w-full bg-tempo-bordeaux hover:bg-tempo-noir"
-              disabled={isLoading || isOAuthLoading !== null}
-            >
-              {isLoading ? "Connexion..." : "Se connecter"}
-            </Button>
-            
-            {/* Séparateur */}
-            <div className="relative w-full">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-muted-foreground">
-                  Ou continuer avec
-                </span>
-              </div>
-            </div>
-            
-            {/* OAuth Button */}
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                setIsOAuthLoading("google")
-                signIn("google", { callbackUrl })
-              }}
-              disabled={isLoading || isOAuthLoading !== null}
-              className="w-full"
-            >
-              {isOAuthLoading === "google" ? (
-                <span className="animate-spin">⏳</span>
-              ) : (
-                <GoogleIcon />
-              )}
-              <span className="ml-2">Continuer avec Google</span>
-            </Button>
-            
-            <p className="text-sm text-center text-muted-foreground">
-              Pas encore de compte ?{" "}
-              <Link href="/register" className="text-tempo-bordeaux hover:underline font-medium">
-                Créer un compte
-              </Link>
-            </p>
-          </CardFooter>
-        </form>
-      </Card>
+          </div>
+          
+          {/* OAuth Button */}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              setIsOAuthLoading("google")
+              signIn("google", { callbackUrl })
+            }}
+            disabled={isLoading || isOAuthLoading !== null}
+            className="w-full"
+          >
+            {isOAuthLoading === "google" ? (
+              <span className="animate-spin">⏳</span>
+            ) : (
+              <GoogleIcon />
+            )}
+            <span className="ml-2">Continuer avec Google</span>
+          </Button>
+          
+          <p className="text-sm text-center text-muted-foreground">
+            Pas encore de compte ?{" "}
+            <Link href="/register" className="text-tempo-bordeaux hover:underline font-medium">
+              Créer un compte
+            </Link>
+          </p>
+        </CardFooter>
+      </form>
+    </Card>
+  )
+}
+
+function LoginLoading() {
+  return (
+    <Card className="w-full max-w-md">
+      <CardHeader className="text-center">
+        <Link href="/" className="text-2xl font-bold text-tempo-bordeaux mb-2 block">
+          TEMPO
+        </Link>
+        <CardTitle className="text-xl">Connexion</CardTitle>
+      </CardHeader>
+      <CardContent className="flex justify-center py-8">
+        <Loader2 className="h-8 w-8 animate-spin text-tempo-bordeaux" />
+      </CardContent>
+    </Card>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <div className="min-h-screen bg-tempo-bordeaux flex items-center justify-center p-4">
+      <Suspense fallback={<LoginLoading />}>
+        <LoginForm />
+      </Suspense>
     </div>
   )
 }

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import dynamic from "next/dynamic"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import Link from "next/link"
@@ -8,8 +9,9 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Loader2 } from "lucide-react"
 
-export default function CompleteProfilePage() {
+function CompleteProfileContent() {
   const router = useRouter()
   const { data: session, status } = useSession()
   
@@ -66,7 +68,7 @@ export default function CompleteProfilePage() {
   if (status === "loading") {
     return (
       <div className="min-h-screen bg-tempo-bordeaux flex items-center justify-center">
-        <p className="text-white">Chargement...</p>
+        <Loader2 className="h-8 w-8 animate-spin text-white" />
       </div>
     )
   }
@@ -141,11 +143,28 @@ export default function CompleteProfilePage() {
               className="w-full bg-tempo-bordeaux hover:bg-tempo-noir"
               disabled={isLoading}
             >
-              {isLoading ? "Enregistrement..." : "Terminer l'inscription"}
+              {isLoading ? "Enregistrement..." : "Terminer linscription"}
             </Button>
           </CardFooter>
         </form>
       </Card>
     </div>
   )
+}
+
+// Use dynamic import with ssr: false to prevent prerendering
+const DynamicCompleteProfile = dynamic(
+  () => Promise.resolve(CompleteProfileContent),
+  { 
+    ssr: false,
+    loading: () => (
+      <div className="min-h-screen bg-tempo-bordeaux flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-white" />
+      </div>
+    )
+  }
+)
+
+export default function CompleteProfilePage() {
+  return <DynamicCompleteProfile />
 }

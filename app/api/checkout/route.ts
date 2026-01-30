@@ -3,6 +3,8 @@ import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { stripe, isStripeConfigured } from "@/lib/stripe"
 
+export const dynamic = 'force-dynamic'
+
 export async function POST(request: Request) {
   try {
     // Check Stripe configuration first

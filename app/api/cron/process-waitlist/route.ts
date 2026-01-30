@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server"
 import { processExpiredWaitlistNotifications } from "@/lib/actions/waitlist"
 
+export const dynamic = 'force-dynamic'
+
 // This endpoint should be called by a cron job (e.g., Vercel Cron)
 // Set up in vercel.json with a schedule like "*/5 * * * *" (every 5 minutes)
 

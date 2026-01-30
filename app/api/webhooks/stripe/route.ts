@@ -4,6 +4,8 @@ import { stripe, isStripeConfigured } from "@/lib/stripe"
 import { db } from "@/lib/db"
 import Stripe from "stripe"
 
+export const dynamic = 'force-dynamic'
+
 export async function POST(request: Request) {
   if (!isStripeConfigured() || !stripe) {
     return NextResponse.json(

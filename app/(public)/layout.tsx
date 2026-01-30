@@ -4,6 +4,8 @@ import { db } from "@/lib/db"
 import { Button } from "@/components/ui/button"
 import { UserMenu } from "@/components/layout/user-menu"
 
+export const dynamic = 'force-dynamic'
+
 export default async function PublicLayout({
   children,
 }: {

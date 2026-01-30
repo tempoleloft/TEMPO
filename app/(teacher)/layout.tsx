@@ -3,6 +3,8 @@ import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { DashboardNav } from "@/components/layout/dashboard-nav"
 
+export const dynamic = 'force-dynamic'
+
 export default async function TeacherLayout({
   children,
 }: {

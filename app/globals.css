@@ -1,0 +1,142 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 
+  Switzer Font - from Fontshare (https://www.fontshare.com/fonts/switzer)
+  
+  Pour installer Switzer:
+  1. Télécharger depuis https://www.fontshare.com/fonts/switzer
+  2. Placer Switzer-Variable.woff2 dans /public/fonts/
+  3. Décommenter le @font-face ci-dessous
+*/
+
+/*
+@font-face {
+  font-family: 'Switzer';
+  src: url('/fonts/Switzer-Variable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: swap;
+  font-style: normal;
+}
+*/
+
+/*
+  TEMPO – LE LOFT
+  Design System Colors:
+  - Bordeaux: #42101B (primary)
+  - Crème: #F2F1ED (background light)
+  - Taupe: #DACBB6 (accent)
+  - Noir: #120F0F (foreground dark)
+*/
+
+@layer base {
+  :root {
+    /* Light mode - fond crème */
+    --background: 40 14% 95%; /* #F2F1ED */
+    --foreground: 12 10% 9%; /* #120F0F */
+    
+    --card: 0 0% 100%;
+    --card-foreground: 12 10% 9%;
+    
+    --popover: 0 0% 100%;
+    --popover-foreground: 12 10% 9%;
+    
+    /* Bordeaux comme couleur primaire */
+    --primary: 350 61% 16%; /* #42101B */
+    --primary-foreground: 40 14% 95%; /* #F2F1ED */
+    
+    /* Taupe comme secondaire */
+    --secondary: 34 26% 78%; /* #DACBB6 */
+    --secondary-foreground: 12 10% 9%;
+    
+    --muted: 34 26% 78%;
+    --muted-foreground: 12 10% 40%;
+    
+    /* Taupe clair pour accent */
+    --accent: 34 26% 85%;
+    --accent-foreground: 12 10% 9%;
+    
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    
+    --border: 34 15% 85%;
+    --input: 34 15% 85%;
+    --ring: 350 61% 16%;
+    --radius: 0.5rem;
+  }
+
+  /* Dark mode - fond bordeaux */
+  .dark {
+    --background: 350 61% 16%; /* #42101B */
+    --foreground: 40 14% 95%; /* #F2F1ED */
+    
+    --card: 350 55% 12%;
+    --card-foreground: 40 14% 95%;
+    
+    --popover: 350 55% 12%;
+    --popover-foreground: 40 14% 95%;
+    
+    --primary: 40 14% 95%; /* Crème */
+    --primary-foreground: 350 61% 16%; /* Bordeaux */
+    
+    --secondary: 34 26% 78%; /* Taupe */
+    --secondary-foreground: 12 10% 9%;
+    
+    --muted: 350 50% 20%;
+    --muted-foreground: 40 10% 70%;
+    
+    --accent: 34 26% 78%;
+    --accent-foreground: 12 10% 9%;
+    
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 98%;
+    
+    --border: 350 40% 25%;
+    --input: 350 40% 25%;
+    --ring: 40 14% 95%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    /* Switzer sera utilisé si installé, sinon Inter */
+  }
+  
+  /* Typography scale inspired by DA */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
+  }
+}
+
+@layer utilities {
+  /* Tempo brand utilities */
+  .bg-tempo-bordeaux {
+    background-color: #42101B;
+  }
+  .bg-tempo-creme {
+    background-color: #F2F1ED;
+  }
+  .bg-tempo-taupe {
+    background-color: #DACBB6;
+  }
+  .bg-tempo-noir {
+    background-color: #120F0F;
+  }
+  .text-tempo-bordeaux {
+    color: #42101B;
+  }
+  .text-tempo-creme {
+    color: #F2F1ED;
+  }
+  .text-tempo-taupe {
+    color: #DACBB6;
+  }
+  .text-tempo-noir {
+    color: #120F0F;
+  }
+}

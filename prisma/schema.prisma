@@ -1,0 +1,351 @@
+// Tempo – Le Loft
+// Prisma Schema for Yoga/Pilates Studio Management
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// ENUMS
+// ============================================================================
+
+enum Role {
+  CLIENT
+  TEACHER
+  ADMIN
+}
+
+enum SessionStatus {
+  SCHEDULED
+  CANCELLED
+  COMPLETED
+}
+
+enum ReservationStatus {
+  BOOKED
+  CANCELLED
+  NO_SHOW
+  ATTENDED
+}
+
+enum ProductKind {
+  SINGLE
+  PACK
+}
+
+enum PurchaseStatus {
+  PENDING
+  PAID
+  REFUNDED
+}
+
+enum CreditReason {
+  PURCHASE
+  BOOKING
+  CANCEL_REFUND
+  ADMIN_ADJUST
+  EXPIRATION
+}
+
+// ============================================================================
+// USER & PROFILES
+// ============================================================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String?
+  emailVerified DateTime?
+  role          Role      @default(CLIENT)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  clientProfile  ClientProfile?
+  teacherProfile TeacherProfile?
+  reservations   Reservation[]
+  purchases      Purchase[]
+  wallet         Wallet?
+  creditLedger   CreditLedger[]
+  sessionsCreated Session[] @relation("CreatedBy")
+
+  // NextAuth
+  accounts Account[]
+  sessions AuthSession[]
+  passwordResetTokens PasswordResetToken[]
+  waitlistEntries WaitlistEntry[]
+
+  @@index([email])
+  @@index([role])
+}
+
+model ClientProfile {
+  id        String    @id @default(cuid())
+  userId    String    @unique
+  firstName String
+  lastName  String
+  phone     String    // Obligatoire
+  birthdate DateTime?
+  notes     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model TeacherProfile {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  displayName String
+  bio         String?
+  photoUrl    String?
+  specialties String[] // ["Yoga", "Pilates", "Reformer"]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessions Session[]
+}
+
+// ============================================================================
+// NEXTAUTH MODELS
+// ============================================================================
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model AuthSession {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expires   DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+}
+
+// ============================================================================
+// WAITLIST (Liste d'attente)
+// ============================================================================
+
+enum WaitlistStatus {
+  WAITING       // En attente
+  NOTIFIED      // Notifié, a 10 min pour accepter
+  ACCEPTED      // A accepté, converti en réservation
+  EXPIRED       // N'a pas répondu à temps
+  CANCELLED     // A annulé sa place en liste d'attente
+}
+
+model WaitlistEntry {
+  id            String         @id @default(cuid())
+  sessionId     String
+  userId        String
+  position      Int            // Position dans la file (1, 2, 3)
+  status        WaitlistStatus @default(WAITING)
+  token         String?        @unique // Token pour accepter la place
+  notifiedAt    DateTime?      // Quand on a notifié l'utilisateur
+  expiresAt     DateTime?      // Date limite pour accepter (notifiedAt + 10 min)
+  acceptedAt    DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, userId]) // Un user ne peut être qu'une fois sur la liste d'attente par session
+  @@index([sessionId, status])
+  @@index([status, expiresAt])
+}
+
+// ============================================================================
+// CLASSES & SESSIONS
+// ============================================================================
+
+model ClassType {
+  id          String   @id @default(cuid())
+  title       String   // "Yoga Vinyasa", "Pilates Mat", "Reformer"
+  description String?
+  durationMin Int      @default(60)
+  level       String?  // "Tous niveaux", "Débutant", "Intermédiaire", "Avancé"
+  colorTag    String?  // Hex color for UI
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  sessions Session[]
+
+  @@index([active])
+}
+
+model Session {
+  id          String        @id @default(cuid())
+  classTypeId String
+  teacherId   String
+  startAt     DateTime
+  endAt       DateTime
+  capacity    Int           @default(12)
+  location    String?       // "Salle principale", "Studio Reformer"
+  status      SessionStatus @default(SCHEDULED)
+  notes       String?
+  createdById String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  classType    ClassType       @relation(fields: [classTypeId], references: [id])
+  teacher      TeacherProfile  @relation(fields: [teacherId], references: [id])
+  createdBy    User?           @relation("CreatedBy", fields: [createdById], references: [id])
+  reservations Reservation[]
+  waitlist     WaitlistEntry[]
+
+  @@index([startAt])
+  @@index([teacherId])
+  @@index([status])
+  @@index([classTypeId, startAt])
+}
+
+// ============================================================================
+// RESERVATIONS
+// ============================================================================
+
+model Reservation {
+  id                       String            @id @default(cuid())
+  sessionId                String
+  userId                   String
+  status                   ReservationStatus @default(BOOKED)
+  bookedAt                 DateTime          @default(now())
+  cancelledAt              DateTime?
+  cancellationPolicyApplied Boolean          @default(false)
+  creditLedgerId           String?           @unique // Link to credit transaction
+  attendedAt               DateTime?
+  createdAt                DateTime          @default(now())
+  updatedAt                DateTime          @updatedAt
+
+  session      Session       @relation(fields: [sessionId], references: [id])
+  user         User          @relation(fields: [userId], references: [id])
+  creditLedger CreditLedger? @relation(fields: [creditLedgerId], references: [id])
+
+  @@unique([sessionId, userId]) // Prevent double booking
+  @@index([userId])
+  @@index([sessionId])
+  @@index([status])
+}
+
+// ============================================================================
+// PRODUCTS & PURCHASES
+// ============================================================================
+
+model Product {
+  id            String      @id @default(cuid())
+  name          String      // "Cours à l'unité", "Carte 5 cours", "Carte 10 cours"
+  description   String?
+  kind          ProductKind
+  credits       Int         @default(0) // 0 for SINGLE, 5 or 10 for PACK
+  priceCents    Int         // Prix en centimes (ex: 2500 = 25€)
+  currency      String      @default("EUR")
+  stripePriceId String?     @unique
+  validityDays  Int?        // Nombre de jours de validité (null = illimité)
+  active        Boolean     @default(true)
+  sortOrder     Int         @default(0)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  purchases Purchase[]
+
+  @@index([active])
+  @@index([kind])
+}
+
+model Purchase {
+  id                      String         @id @default(cuid())
+  userId                  String
+  productId               String
+  stripeCheckoutSessionId String?        @unique
+  stripePaymentIntentId   String?
+  amountCents             Int
+  currency                String         @default("EUR")
+  status                  PurchaseStatus @default(PENDING)
+  creditsGranted          Int            @default(0)
+  expiresAt               DateTime?      // For packs with validity
+  createdAt               DateTime       @default(now())
+  updatedAt               DateTime       @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@index([stripeCheckoutSessionId])
+}
+
+// ============================================================================
+// WALLET & CREDITS
+// ============================================================================
+
+model Wallet {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  creditsBalance Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model CreditLedger {
+  id        String       @id @default(cuid())
+  userId    String
+  delta     Int          // +5, -1, etc.
+  reason    CreditReason
+  refType   String?      // "Purchase", "Reservation", "Admin"
+  refId     String?      // ID of the related entity (polymorphic, no FK)
+  notes     String?
+  createdAt DateTime     @default(now())
+
+  user        User         @relation(fields: [userId], references: [id])
+  reservation Reservation?
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([refType, refId])
+}

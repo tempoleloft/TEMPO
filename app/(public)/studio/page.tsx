@@ -119,8 +119,8 @@ export default function StudioPage() {
                   <h3 className="font-semibold mb-1">Horaires</h3>
                   <p className="text-muted-foreground">
                     Lundi - Vendredi : 7h00 - 21h00<br />
-                    Samedi : 9h00 - 14h00<br />
-                    Dimanche : Fermé
+                    Samedi : 8h00 - 22h00<br />
+                    Dimanche : 8h00 - 20h00
                   </p>
                 </div>
               </div>
@@ -129,7 +129,7 @@ export default function StudioPage() {
                 <Phone className="h-6 w-6 text-tempo-bordeaux flex-shrink-0 mt-1" />
                 <div>
                   <h3 className="font-semibold mb-1">Téléphone</h3>
-                  <p className="text-muted-foreground">01 23 45 67 89</p>
+                  <p className="text-muted-foreground">06 34 39 65 79</p>
                 </div>
               </div>
               
@@ -137,7 +137,7 @@ export default function StudioPage() {
                 <Mail className="h-6 w-6 text-tempo-bordeaux flex-shrink-0 mt-1" />
                 <div>
                   <h3 className="font-semibold mb-1">Email</h3>
-                  <p className="text-muted-foreground">hello@tempo-leloft.com</p>
+                  <p className="text-muted-foreground">contact@tempoleloft.com</p>
                 </div>
               </div>
             </div>

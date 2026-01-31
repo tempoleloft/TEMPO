@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { signIn } from "next-auth/react"
 
@@ -88,8 +89,14 @@ export default function RegisterPage() {
     <div className="min-h-screen bg-tempo-bordeaux flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <Link href="/" className="text-2xl font-bold text-tempo-bordeaux mb-2 block">
-            TEMPO
+          <Link href="/" className="flex justify-center mb-2">
+            <Image 
+              src="/logo-dark.jpg" 
+              alt="Tempo" 
+              width={120} 
+              height={40} 
+              className="h-10 w-auto"
+            />
           </Link>
           <CardTitle className="text-xl">Créer un compte</CardTitle>
           <CardDescription>

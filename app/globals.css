@@ -2,24 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
-/* 
-  Switzer Font - from Fontshare (https://www.fontshare.com/fonts/switzer)
-  
-  Pour installer Switzer:
-  1. Télécharger depuis https://www.fontshare.com/fonts/switzer
-  2. Placer Switzer-Variable.woff2 dans /public/fonts/
-  3. Décommenter le @font-face ci-dessous
-*/
-
-/*
-@font-face {
-  font-family: 'Switzer';
-  src: url('/fonts/Switzer-Variable.woff2') format('woff2');
-  font-weight: 100 900;
-  font-display: swap;
-  font-style: normal;
-}
-*/
+/* Switzer Font - from Fontshare CDN */
+@import url('https://api.fontshare.com/v2/css?f[]=switzer@100,200,300,400,500,600,700,800,900&display=swap');
 
 /*
   TEMPO – LE LOFT

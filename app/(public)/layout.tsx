@@ -1,4 +1,5 @@
 import Link from "next/link"
+import Image from "next/image"
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { Button } from "@/components/ui/button"
@@ -37,8 +38,15 @@ export default async function PublicLayout({
       {/* Navigation */}
       <nav className="sticky top-0 z-50 bg-tempo-bordeaux text-tempo-creme px-4 sm:px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <Link href="/" className="text-xl sm:text-2xl font-bold tracking-tight">
-            TEMPO
+          <Link href="/">
+            <Image 
+              src="/logo-white.png" 
+              alt="Tempo" 
+              width={120} 
+              height={40} 
+              className="h-8 sm:h-10 w-auto"
+              priority
+            />
           </Link>
           <div className="hidden md:flex items-center gap-8 text-sm">
             <Link href="/studio" className="hover:opacity-70 transition-opacity">
@@ -91,8 +99,13 @@ export default async function PublicLayout({
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 mb-8">
             <div className="col-span-2 md:col-span-1">
-              <h4 className="text-tempo-creme font-bold text-xl mb-4">TEMPO</h4>
-              <p className="text-sm opacity-70">Le Loft</p>
+              <Image 
+                src="/logo-white.png" 
+                alt="Tempo" 
+                width={140} 
+                height={50} 
+                className="h-12 w-auto mb-4"
+              />
               <p className="text-sm opacity-70">Paris Marais</p>
             </div>
             <div>

@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { signOut } from "next-auth/react"
 import { Button } from "@/components/ui/button"
@@ -54,10 +55,15 @@ export function MobileNav({ isLoggedIn, dashboardLink, userName }: MobileNavProp
           <div className="flex items-center justify-between p-4 border-b border-tempo-creme/20">
             <Link 
               href="/" 
-              className="text-xl font-bold"
               onClick={() => setIsOpen(false)}
             >
-              TEMPO
+              <Image 
+                src="/logo-white.png" 
+                alt="Tempo" 
+                width={100} 
+                height={35} 
+                className="h-8 w-auto"
+              />
             </Link>
             <Button
               variant="ghost"

@@ -5,6 +5,7 @@ import dynamic from "next/dynamic"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import Link from "next/link"
+import Image from "next/image"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -77,8 +78,14 @@ function CompleteProfileContent() {
     <div className="min-h-screen bg-tempo-bordeaux flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <Link href="/" className="text-2xl font-bold text-tempo-bordeaux mb-2 block">
-            TEMPO
+          <Link href="/" className="flex justify-center mb-2">
+            <Image 
+              src="/logo-dark.jpg" 
+              alt="Tempo" 
+              width={120} 
+              height={40} 
+              className="h-10 w-auto"
+            />
           </Link>
           <CardTitle className="text-xl">Complétez votre profil</CardTitle>
           <CardDescription>

@@ -63,7 +63,7 @@ function VerifyEmailContent() {
       <CardHeader className="text-center">
         <Link href="/" className="flex justify-center mb-2">
           <Image 
-            src="/logo-dark.jpg" 
+            src="/logo-dark.png" 
             alt="Tempo" 
             width={120} 
             height={40} 
@@ -118,7 +118,7 @@ function VerifyEmailLoading() {
       <CardHeader className="text-center">
         <Link href="/" className="flex justify-center mb-2">
           <Image 
-            src="/logo-dark.jpg" 
+            src="/logo-dark.png" 
             alt="Tempo" 
             width={120} 
             height={40} 

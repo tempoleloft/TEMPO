@@ -75,7 +75,7 @@ export function DashboardNav({ role, userName }: DashboardNavProps) {
         <div className="flex items-center justify-between px-4 py-3">
           <Link href="/">
             <Image 
-              src="/logo-dark.jpg" 
+              src="/logo-dark.png" 
               alt="Tempo" 
               width={100} 
               height={35} 
@@ -115,7 +115,7 @@ export function DashboardNav({ role, userName }: DashboardNavProps) {
             <div>
               <Link href="/">
                 <Image 
-                  src="/logo-dark.jpg" 
+                  src="/logo-dark.png" 
                   alt="Tempo" 
                   width={100} 
                   height={35} 
@@ -177,7 +177,7 @@ export function DashboardNav({ role, userName }: DashboardNavProps) {
           <div className="border-b px-6 py-4">
             <Link href="/">
               <Image 
-                src="/logo-dark.jpg" 
+                src="/logo-dark.png" 
                 alt="Tempo" 
                 width={120} 
                 height={40} 

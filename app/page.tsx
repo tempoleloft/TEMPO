@@ -23,6 +23,9 @@ export default function Home() {
             <Link href="/studio" className="hover:opacity-70 transition-opacity">
               Studio
             </Link>
+            <Link href="/cafe" className="hover:opacity-70 transition-opacity">
+              Café
+            </Link>
             <Link href="/profs" className="hover:opacity-70 transition-opacity">
               Professeurs
             </Link>
@@ -165,6 +168,42 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Café Section */}
+      <section className="py-12 sm:py-24 px-4 sm:px-6 bg-tempo-creme">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-8 sm:gap-12 items-center">
+            <div className="relative aspect-[4/3] rounded-2xl overflow-hidden">
+              <Image
+                src="/cafe-home.png"
+                alt="TEMPO Le Café"
+                fill
+                className="object-cover"
+              />
+            </div>
+            <div className="space-y-6">
+              <Image
+                src="/logo-cafe-dark.jpg"
+                alt="TEMPO Le Café"
+                width={160}
+                height={60}
+                className="h-14 w-auto"
+              />
+              <p className="text-tempo-noir/70 text-base sm:text-lg leading-relaxed">
+                Avant votre cours ou après votre pratique, prolongez votre moment 
+                au Café. Un espace chaleureux avec café de spécialité, 
+                snacks healthy et ambiance coworking.
+              </p>
+              <Button 
+                asChild
+                className="bg-tempo-bordeaux text-tempo-creme hover:bg-tempo-noir"
+              >
+                <Link href="/cafe">Découvrir le café</Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-12 sm:py-24 px-4 sm:px-6 bg-tempo-bordeaux text-tempo-creme">
         <div className="max-w-4xl mx-auto text-center space-y-6 sm:space-y-8">
@@ -205,6 +244,7 @@ export default function Home() {
               <h5 className="font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Studio</h5>
               <ul className="space-y-2 text-sm opacity-70">
                 <li><Link href="/studio" className="hover:opacity-100">Notre espace</Link></li>
+                <li><Link href="/cafe" className="hover:opacity-100">Le Café</Link></li>
                 <li><Link href="/profs" className="hover:opacity-100">Professeurs</Link></li>
                 <li><Link href="/planning" className="hover:opacity-100">Planning</Link></li>
               </ul>

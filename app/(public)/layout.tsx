@@ -52,6 +52,9 @@ export default async function PublicLayout({
             <Link href="/studio" className="hover:opacity-70 transition-opacity">
               Studio
             </Link>
+            <Link href="/cafe" className="hover:opacity-70 transition-opacity">
+              Café
+            </Link>
             <Link href="/profs" className="hover:opacity-70 transition-opacity">
               Professeurs
             </Link>
@@ -112,6 +115,7 @@ export default async function PublicLayout({
               <h5 className="font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Studio</h5>
               <ul className="space-y-2 text-sm opacity-70">
                 <li><Link href="/studio" className="hover:opacity-100">Notre espace</Link></li>
+                <li><Link href="/cafe" className="hover:opacity-100">Le Café</Link></li>
                 <li><Link href="/profs" className="hover:opacity-100">Professeurs</Link></li>
                 <li><Link href="/planning" className="hover:opacity-100">Planning</Link></li>
               </ul>

@@ -7,6 +7,34 @@ import { db } from "@/lib/db"
 import { AuthError } from "next-auth"
 import { sendVerificationEmail, sendPasswordResetEmail } from "@/lib/email"
 import { nanoid } from "nanoid"
+import { headers } from "next/headers"
+import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit"
+
+/**
+ * Récupère l'adresse IP du client depuis les headers
+ * Utilisé pour le rate limiting des server actions
+ */
+function getClientIPFromHeaders(): string {
+  const headersList = headers()
+  
+  // Headers courants pour les proxies (Vercel, Cloudflare, etc.)
+  const forwardedFor = headersList.get("x-forwarded-for")
+  if (forwardedFor) {
+    return forwardedFor.split(",")[0].trim()
+  }
+
+  const realIP = headersList.get("x-real-ip")
+  if (realIP) {
+    return realIP
+  }
+
+  const cfConnectingIP = headersList.get("cf-connecting-ip")
+  if (cfConnectingIP) {
+    return cfConnectingIP
+  }
+
+  return "unknown"
+}
 
 const registerSchema = z.object({
   email: z.string().email("Email invalide"),
@@ -20,6 +48,20 @@ export type RegisterInput = z.infer<typeof registerSchema>
 
 export async function registerUser(data: RegisterInput) {
   try {
+    // Rate limiting pour éviter les inscriptions en masse
+    const clientIP = getClientIPFromHeaders()
+    const rateLimitResult = await rateLimit(
+      `register:${clientIP}`,
+      RATE_LIMITS.REGISTER
+    )
+
+    if (!rateLimitResult.success) {
+      return { 
+        success: false, 
+        error: `Trop de tentatives. Réessayez dans ${rateLimitResult.retryAfter} secondes.` 
+      }
+    }
+
     const parsed = registerSchema.safeParse(data)
     
     if (!parsed.success) {
@@ -89,6 +131,37 @@ export async function registerUser(data: RegisterInput) {
 
 export async function loginUser(email: string, password: string) {
   try {
+    // Rate limiting pour éviter les attaques par force brute
+    // On limite par IP ET par email pour une protection maximale
+    const clientIP = getClientIPFromHeaders()
+    const emailLower = email.toLowerCase()
+    
+    // Vérifier le rate limit par IP
+    const ipRateLimitResult = await rateLimit(
+      `login:ip:${clientIP}`,
+      RATE_LIMITS.LOGIN
+    )
+
+    if (!ipRateLimitResult.success) {
+      return { 
+        success: false, 
+        error: `Trop de tentatives. Réessayez dans ${ipRateLimitResult.retryAfter} secondes.` 
+      }
+    }
+
+    // Vérifier le rate limit par email (protège contre les attaques distribuées sur un compte)
+    const emailRateLimitResult = await rateLimit(
+      `login:email:${emailLower}`,
+      RATE_LIMITS.LOGIN
+    )
+
+    if (!emailRateLimitResult.success) {
+      return { 
+        success: false, 
+        error: `Trop de tentatives pour ce compte. Réessayez dans ${emailRateLimitResult.retryAfter} secondes.` 
+      }
+    }
+
     await signIn("credentials", {
       email,
       password,
@@ -151,6 +224,23 @@ export async function verifyEmail(token: string) {
 
 export async function requestPasswordReset(email: string) {
   try {
+    // Rate limiting strict pour éviter le spam d'emails
+    // 3 tentatives par heure seulement
+    const clientIP = getClientIPFromHeaders()
+    
+    const rateLimitResult = await rateLimit(
+      `password-reset:${clientIP}`,
+      RATE_LIMITS.PASSWORD_RESET
+    )
+
+    if (!rateLimitResult.success) {
+      // Ne pas révéler le rate limit exact pour éviter les attaques de timing
+      return { 
+        success: true, 
+        message: "Si cet email existe, un lien de réinitialisation a été envoyé." 
+      }
+    }
+
     const user = await db.user.findUnique({
       where: { email: email.toLowerCase() },
     })

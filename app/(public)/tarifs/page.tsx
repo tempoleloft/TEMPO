@@ -119,7 +119,7 @@ export default async function TarifsPage() {
               </h3>
               <p className="text-muted-foreground text-sm">
                 Oui, vos crédits sont valables pour tous nos cours : Yoga Vinyasa, 
-                Yoga Hatha, Pilates Mat et Pilates Reformer.
+                Yoga Hatha, Pilates Mat et Barre au Sol.
               </p>
             </div>
             

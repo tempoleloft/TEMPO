@@ -106,7 +106,7 @@ export default async function PublicLayout({
             </div>
             <div>
               <h5 className="font-semibold mb-4">Contact</h5>
-              <p className="text-sm opacity-70">12 Rue du Temple</p>
+              <p className="text-sm opacity-70">41 Rue du Temple</p>
               <p className="text-sm opacity-70">75004 Paris</p>
               <p className="text-sm opacity-70 mt-2">hello@tempo-leloft.com</p>
             </div>

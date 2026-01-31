@@ -76,16 +76,16 @@ export default function StudioPage() {
             
             <div className="bg-white rounded-lg p-8 shadow-sm">
               <h3 className="text-xl font-semibold text-tempo-bordeaux mb-4">
-                Studio Reformer
+                Espace détente
               </h3>
               <p className="text-muted-foreground mb-4">
-                6 machines Reformer de dernière génération dans un espace dédié. 
-                Cours en petit groupe pour un accompagnement personnalisé.
+                Un coin cosy pour vous accueillir avant et après vos cours.
+                Profitez d un moment de calme dans une ambiance chaleureuse.
               </p>
               <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Reformers Balanced Body</li>
-                <li>• Cours limités à 6 personnes</li>
-                <li>• Accompagnement individuel</li>
+                <li>• Coin tisane et infusions</li>
+                <li>• Vestiaires avec douches</li>
+                <li>• Casiers sécurisés</li>
               </ul>
             </div>
           </div>
@@ -106,9 +106,9 @@ export default function StudioPage() {
                 <div>
                   <h3 className="font-semibold mb-1">Adresse</h3>
                   <p className="text-muted-foreground">
-                    12 Rue du Temple<br />
+                    41 Rue du Temple<br />
                     75004 Paris<br />
-                    Métro Hôtel de Ville (lignes 1, 11)
+                    Métro Rambuteau (ligne 11)
                   </p>
                 </div>
               </div>
@@ -142,8 +142,17 @@ export default function StudioPage() {
               </div>
             </div>
             
-            <div className="bg-tempo-taupe/30 rounded-lg aspect-video flex items-center justify-center">
-              <span className="text-muted-foreground">Carte Google Maps</span>
+            <div className="rounded-lg aspect-video overflow-hidden">
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2624.8749462776635!2d2.352242!3d48.861111!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47e66e1c5f5a5555%3A0x5555555555555555!2s41%20Rue%20du%20Temple%2C%2075004%20Paris!5e0!3m2!1sfr!2sfr!4v1234567890"
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="Tempo Le Loft - 41 Rue du Temple, Paris"
+              />
             </div>
           </div>
         </div>
@@ -162,7 +171,7 @@ export default function StudioPage() {
             <Button asChild size="lg" className="bg-tempo-creme text-tempo-bordeaux hover:bg-tempo-taupe">
               <Link href="/planning">Voir le planning</Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="border-tempo-creme/30 text-tempo-creme hover:bg-tempo-creme/10">
+            <Button asChild size="lg" className="bg-transparent border-2 border-tempo-creme text-tempo-creme hover:bg-tempo-creme hover:text-tempo-bordeaux">
               <Link href="/tarifs">Nos tarifs</Link>
             </Button>
           </div>

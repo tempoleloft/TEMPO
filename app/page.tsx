@@ -127,7 +127,7 @@ export default function Home() {
               { name: "Yoga Vinyasa", desc: "Flow dynamique" },
               { name: "Yoga Hatha", desc: "Douceur & précision" },
               { name: "Pilates Mat", desc: "Renforcement profond" },
-              { name: "Pilates Reformer", desc: "Travail ciblé" },
+              { name: "Barre au Sol", desc: "Grâce & maintien" },
             ].map((discipline) => (
               <div 
                 key={discipline.name}
@@ -203,7 +203,7 @@ export default function Home() {
             </div>
             <div>
               <h5 className="font-semibold mb-4">Contact</h5>
-              <p className="text-sm opacity-70">12 Rue du Temple</p>
+              <p className="text-sm opacity-70">41 Rue du Temple</p>
               <p className="text-sm opacity-70">75004 Paris</p>
               <p className="text-sm opacity-70 mt-2">hello@tempo-leloft.com</p>
             </div>

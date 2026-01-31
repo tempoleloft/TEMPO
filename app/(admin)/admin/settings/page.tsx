@@ -107,7 +107,7 @@ export default async function AdminSettingsPage() {
             </div>
             <div>
               <p className="text-sm font-medium">Adresse</p>
-              <p className="text-sm text-muted-foreground">12 Rue du Temple, 75004 Paris</p>
+              <p className="text-sm text-muted-foreground">41 Rue du Temple, 75004 Paris</p>
             </div>
             <div>
               <p className="text-sm font-medium">Email de contact</p>

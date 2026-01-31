@@ -18,7 +18,6 @@ const SPECIALTIES_OPTIONS = [
   "Yoga Yin",
   "Méditation",
   "Pilates Mat",
-  "Pilates Reformer",
   "Barre au Sol",
 ]
 

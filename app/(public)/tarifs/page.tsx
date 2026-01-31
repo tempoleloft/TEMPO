@@ -16,12 +16,12 @@ export default async function TarifsPage() {
   return (
     <div>
       {/* Hero */}
-      <section className="bg-tempo-bordeaux text-tempo-creme py-24 px-6">
+      <section className="bg-tempo-bordeaux text-tempo-creme py-12 sm:py-24 px-4 sm:px-6">
         <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-5xl font-bold mb-6">
+          <h1 className="text-3xl sm:text-5xl font-bold mb-4 sm:mb-6">
             Nos Tarifs
           </h1>
-          <p className="text-xl opacity-80 max-w-2xl mx-auto">
+          <p className="text-base sm:text-xl opacity-80 max-w-2xl mx-auto">
             Des formules adaptées à votre rythme de pratique. 
             Plus vous pratiquez, plus vous économisez.
           </p>
@@ -29,9 +29,9 @@ export default async function TarifsPage() {
       </section>
 
       {/* Pricing Cards */}
-      <section className="py-20 px-6">
+      <section className="py-12 sm:py-20 px-4 sm:px-6">
         <div className="max-w-5xl mx-auto">
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
             {products.map((product, index) => {
               const pricePerClass = product.credits > 0 
                 ? (product.priceCents / 100 / product.credits).toFixed(0)
@@ -106,9 +106,9 @@ export default async function TarifsPage() {
       </section>
 
       {/* FAQ */}
-      <section className="py-20 px-6 bg-tempo-taupe/20">
+      <section className="py-12 sm:py-20 px-4 sm:px-6 bg-tempo-taupe/20">
         <div className="max-w-3xl mx-auto">
-          <h2 className="text-3xl font-bold text-tempo-bordeaux mb-12 text-center">
+          <h2 className="text-2xl sm:text-3xl font-bold text-tempo-bordeaux mb-8 sm:mb-12 text-center">
             Questions fréquentes
           </h2>
           
@@ -157,15 +157,15 @@ export default async function TarifsPage() {
       </section>
 
       {/* CTA */}
-      <section className="py-20 px-6 bg-tempo-bordeaux text-tempo-creme">
+      <section className="py-12 sm:py-20 px-4 sm:px-6 bg-tempo-bordeaux text-tempo-creme">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-6">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">
             Prêt à commencer ?
           </h2>
-          <p className="text-xl opacity-80 mb-8">
+          <p className="text-base sm:text-xl opacity-80 mb-6 sm:mb-8">
             Créez votre compte et réservez votre premier cours dès aujourd'hui.
           </p>
-          <Button asChild size="lg" className="bg-tempo-creme text-tempo-bordeaux hover:bg-tempo-taupe">
+          <Button asChild size="lg" className="bg-tempo-creme text-tempo-bordeaux hover:bg-tempo-taupe w-full sm:w-auto">
             <Link href="/register">Créer mon compte</Link>
           </Button>
         </div>

@@ -28,7 +28,7 @@ export default async function ClientLayout({
   return (
     <div className="min-h-screen bg-tempo-creme">
       <DashboardNav role="CLIENT" userName={userName || undefined} />
-      <main className="ml-64 p-8">
+      <main className="pt-16 px-4 pb-8 md:pt-0 md:ml-64 md:p-8">
         {children}
       </main>
     </div>

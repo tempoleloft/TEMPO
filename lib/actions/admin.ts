@@ -335,10 +335,11 @@ export async function markAttendance(
 const createProductSchema = z.object({
   name: z.string().min(2, "Nom requis"),
   description: z.string().optional(),
-  kind: z.enum(["SINGLE", "PACK"]),
+  kind: z.enum(["SINGLE", "PACK", "MERCH"]),
   priceCents: z.number().int().min(100, "Prix minimum 1€"),
-  credits: z.number().int().min(1, "Au moins 1 crédit"),
-  validityDays: z.number().int().min(1, "Au moins 1 jour de validité"),
+  credits: z.number().int().min(0, "Crédits invalides"), // 0 allowed for MERCH
+  validityDays: z.number().int().min(0).optional(), // 0 or null for MERCH
+  imageUrl: z.string().url().optional().or(z.literal("")), // Optional image URL
   sortOrder: z.number().int().optional(),
 })
 
@@ -361,7 +362,7 @@ export async function createProduct(data: CreateProductInput) {
       }
     }
 
-    const { name, description, kind, priceCents, credits, validityDays, sortOrder } = parsed.data
+    const { name, description, kind, priceCents, credits, validityDays, imageUrl, sortOrder } = parsed.data
 
     // Get next sort order if not provided
     let finalSortOrder = sortOrder
@@ -378,8 +379,9 @@ export async function createProduct(data: CreateProductInput) {
         description: description || null,
         kind,
         priceCents,
-        credits,
-        validityDays,
+        credits: kind === "MERCH" ? 0 : credits, // No credits for merch
+        validityDays: kind === "MERCH" ? null : validityDays, // No validity for merch
+        imageUrl: imageUrl || null,
         sortOrder: finalSortOrder,
         active: true,
       },
@@ -420,6 +422,9 @@ export async function updateProduct(
       data: {
         ...data,
         description: data.description || null,
+        imageUrl: data.imageUrl || null,
+        credits: data.kind === "MERCH" ? 0 : data.credits,
+        validityDays: data.kind === "MERCH" ? null : data.validityDays,
       },
     })
 
@@ -465,6 +470,46 @@ export async function toggleProductActive(productId: string) {
   } catch (error) {
     console.error("Toggle product error:", error)
     return { success: false, error: "Erreur lors de la mise à jour" }
+  }
+}
+
+export async function deleteProduct(productId: string) {
+  const authSession = await auth()
+  
+  if (!authSession?.user || authSession.user.role !== "ADMIN") {
+    return { success: false, error: "Non autorisé" }
+  }
+
+  try {
+    const product = await db.product.findUnique({
+      where: { id: productId },
+      include: { purchases: { take: 1 } },
+    })
+
+    if (!product) {
+      return { success: false, error: "Produit non trouvé" }
+    }
+
+    // Check if product has purchases
+    if (product.purchases.length > 0) {
+      return { 
+        success: false, 
+        error: "Ce produit a des achats associés. Désactivez-le plutôt que de le supprimer." 
+      }
+    }
+
+    await db.product.delete({
+      where: { id: productId },
+    })
+
+    revalidatePath("/admin/produits")
+    revalidatePath("/app/paiements")
+    revalidatePath("/tarifs")
+    
+    return { success: true }
+  } catch (error) {
+    console.error("Delete product error:", error)
+    return { success: false, error: "Erreur lors de la suppression" }
   }
 }
 

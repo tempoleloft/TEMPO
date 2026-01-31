@@ -61,10 +61,10 @@ export default async function ClientDashboard() {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-tempo-bordeaux">
+        <h1 className="text-2xl sm:text-3xl font-bold text-tempo-bordeaux">
           Bonjour {profile?.firstName || ""}
         </h1>
-        <p className="text-muted-foreground mt-1">
+        <p className="text-muted-foreground mt-1 text-sm sm:text-base">
           Bienvenue dans votre espace personnel
         </p>
       </div>
@@ -144,27 +144,27 @@ export default async function ClientDashboard() {
               {upcomingReservations.map((reservation) => (
                 <div
                   key={reservation.id}
-                  className="flex items-center justify-between p-4 rounded-lg bg-tempo-taupe/10"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-lg bg-tempo-taupe/10 gap-3"
                 >
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3 sm:gap-4">
                     <div 
-                      className="w-2 h-12 rounded-full"
+                      className="w-2 h-10 sm:h-12 rounded-full shrink-0"
                       style={{ backgroundColor: reservation.session.classType.colorTag || "#42101B" }}
                     />
-                    <div>
-                      <p className="font-semibold">
+                    <div className="min-w-0">
+                      <p className="font-semibold truncate">
                         {reservation.session.classType.title}
                       </p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm text-muted-foreground truncate">
                         avec {reservation.session.teacher.displayName}
                       </p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-medium">
-                      {format(reservation.session.startAt, "EEEE d MMMM", { locale: fr })}
+                  <div className="text-left sm:text-right pl-5 sm:pl-0">
+                    <p className="font-medium text-sm sm:text-base">
+                      {format(reservation.session.startAt, "EEE d MMM", { locale: fr })}
                     </p>
-                    <p className="text-sm text-muted-foreground flex items-center justify-end gap-1">
+                    <p className="text-sm text-muted-foreground flex items-center sm:justify-end gap-1">
                       <Clock className="h-3 w-3" />
                       {format(reservation.session.startAt, "HH:mm")}
                     </p>

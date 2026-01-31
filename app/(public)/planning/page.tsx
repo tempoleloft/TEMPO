@@ -48,42 +48,46 @@ export default async function PublicPlanningPage({ searchParams }: PageProps) {
   }))
 
   return (
-    <div className="py-12 px-6">
+    <div className="py-8 sm:py-12 px-4 sm:px-6">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-tempo-bordeaux mb-4">
+        <div className="text-center mb-8 sm:mb-12">
+          <h1 className="text-2xl sm:text-4xl font-bold text-tempo-bordeaux mb-3 sm:mb-4">
             Planning des cours
           </h1>
-          <p className="text-muted-foreground max-w-xl mx-auto">
+          <p className="text-muted-foreground max-w-xl mx-auto text-sm sm:text-base">
             Découvrez nos cours de yoga et pilates. 
             Connectez-vous pour réserver votre place.
           </p>
         </div>
 
         {/* Week Navigation */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mb-6 sm:mb-8">
           <Button
             asChild
             variant="outline"
+            size="sm"
+            className="w-full sm:w-auto order-2 sm:order-1"
             disabled={weekOffset <= 0}
           >
             <Link href={`/planning?week=${weekOffset - 1}`}>
-              ← Semaine précédente
+              ← Précédent
             </Link>
           </Button>
           
-          <h2 className="text-xl font-semibold text-tempo-bordeaux">
-            {format(weekStart, "d MMMM", { locale: fr })} - {format(weekEnd, "d MMMM yyyy", { locale: fr })}
+          <h2 className="text-base sm:text-xl font-semibold text-tempo-bordeaux text-center order-1 sm:order-2">
+            {format(weekStart, "d MMM", { locale: fr })} - {format(weekEnd, "d MMM yyyy", { locale: fr })}
           </h2>
           
           <Button
             asChild
             variant="outline"
+            size="sm"
+            className="w-full sm:w-auto order-3"
             disabled={weekOffset >= 4}
           >
             <Link href={`/planning?week=${weekOffset + 1}`}>
-              Semaine suivante →
+              Suivant →
             </Link>
           </Button>
         </div>
@@ -111,18 +115,18 @@ export default async function PublicPlanningPage({ searchParams }: PageProps) {
                     return (
                       <div
                         key={session.id}
-                        className="p-4 flex items-center justify-between hover:bg-tempo-taupe/10 transition-colors"
+                        className="p-4 flex flex-col sm:flex-row sm:items-center justify-between hover:bg-tempo-taupe/10 transition-colors gap-3"
                       >
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-3 sm:gap-4">
                           <div 
-                            className="w-1 h-14 rounded-full"
+                            className="w-1 h-12 sm:h-14 rounded-full shrink-0"
                             style={{ backgroundColor: session.classType.colorTag || "#42101B" }}
                           />
-                          <div>
-                            <p className="font-semibold text-tempo-bordeaux">
+                          <div className="min-w-0 flex-1">
+                            <p className="font-semibold text-tempo-bordeaux truncate">
                               {session.classType.title}
                             </p>
-                            <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
+                            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground mt-1">
                               <span className="flex items-center gap-1">
                                 <Clock className="h-3 w-3" />
                                 {format(session.startAt, "HH:mm")} - {format(session.endAt, "HH:mm")}
@@ -132,7 +136,7 @@ export default async function PublicPlanningPage({ searchParams }: PageProps) {
                                 {session.teacher.displayName}
                               </span>
                               {session.location && (
-                                <span className="flex items-center gap-1">
+                                <span className="flex items-center gap-1 hidden sm:flex">
                                   <MapPin className="h-3 w-3" />
                                   {session.location}
                                 </span>
@@ -141,7 +145,7 @@ export default async function PublicPlanningPage({ searchParams }: PageProps) {
                           </div>
                         </div>
                         
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4 pl-4 sm:pl-0">
                           {session.classType.level && (
                             <Badge variant="outline" className="hidden sm:inline-flex">
                               {session.classType.level}
@@ -149,9 +153,9 @@ export default async function PublicPlanningPage({ searchParams }: PageProps) {
                           )}
                           
                           {isFull ? (
-                            <Badge variant="destructive">COMPLET</Badge>
+                            <Badge variant="destructive" className="text-xs">COMPLET</Badge>
                           ) : (
-                            <Badge variant="secondary">
+                            <Badge variant="secondary" className="text-xs">
                               {spotsLeft} place{spotsLeft > 1 ? "s" : ""}
                             </Badge>
                           )}
@@ -177,16 +181,16 @@ export default async function PublicPlanningPage({ searchParams }: PageProps) {
         </div>
 
         {/* CTA */}
-        <div className="mt-12 text-center bg-tempo-bordeaux text-tempo-creme rounded-lg p-8">
-          <h3 className="text-2xl font-bold mb-4">Prêt à commencer ?</h3>
-          <p className="opacity-80 mb-6">
+        <div className="mt-8 sm:mt-12 text-center bg-tempo-bordeaux text-tempo-creme rounded-lg p-6 sm:p-8">
+          <h3 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4">Prêt à commencer ?</h3>
+          <p className="opacity-80 mb-4 sm:mb-6 text-sm sm:text-base">
             Créez votre compte pour réserver vos cours et profiter de nos offres.
           </p>
-          <div className="flex items-center justify-center gap-4">
-            <Button asChild className="bg-tempo-creme text-tempo-bordeaux hover:bg-tempo-taupe">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
+            <Button asChild className="bg-tempo-creme text-tempo-bordeaux hover:bg-tempo-taupe w-full sm:w-auto">
               <Link href="/register">Créer un compte</Link>
             </Button>
-            <Button asChild variant="outline" className="border-tempo-creme/30 text-tempo-creme hover:bg-tempo-creme/10">
+            <Button asChild variant="outline" className="border-tempo-creme/30 text-tempo-creme hover:bg-tempo-creme/10 w-full sm:w-auto">
               <Link href="/tarifs">Voir les tarifs</Link>
             </Button>
           </div>

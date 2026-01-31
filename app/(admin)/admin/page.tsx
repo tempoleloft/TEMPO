@@ -70,16 +70,16 @@ export default async function AdminDashboard() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-tempo-bordeaux">
+          <h1 className="text-2xl sm:text-3xl font-bold text-tempo-bordeaux">
             Administration
           </h1>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-muted-foreground mt-1 text-sm sm:text-base">
             Vue d'ensemble de votre studio
           </p>
         </div>
-        <Button asChild className="bg-tempo-bordeaux hover:bg-tempo-noir">
+        <Button asChild className="bg-tempo-bordeaux hover:bg-tempo-noir w-full sm:w-auto">
           <Link href="/admin/planning">Gérer le planning</Link>
         </Button>
       </div>
@@ -178,28 +178,28 @@ export default async function AdminDashboard() {
                 <Link
                   key={session.id}
                   href={`/admin/session/${session.id}`}
-                  className="flex items-center justify-between p-4 rounded-lg bg-tempo-taupe/10 hover:bg-tempo-taupe/20 transition-colors"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-lg bg-tempo-taupe/10 hover:bg-tempo-taupe/20 transition-colors gap-3"
                 >
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3 sm:gap-4">
                     <div 
-                      className="w-2 h-10 rounded-full"
+                      className="w-2 h-10 rounded-full shrink-0"
                       style={{ backgroundColor: session.classType.colorTag || "#42101B" }}
                     />
-                    <div>
-                      <p className="font-semibold">
+                    <div className="min-w-0">
+                      <p className="font-semibold truncate">
                         {session.classType.title}
                       </p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm text-muted-foreground truncate">
                         {session.teacher.displayName} • {session.location || "Salle principale"}
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <p className="font-medium">
+                  <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4 pl-5 sm:pl-0">
+                    <div className="text-left sm:text-right">
+                      <p className="font-medium text-sm sm:text-base">
                         {format(session.startAt, "EEE d MMM", { locale: fr })}
                       </p>
-                      <p className="text-sm text-muted-foreground flex items-center justify-end gap-1">
+                      <p className="text-sm text-muted-foreground flex items-center sm:justify-end gap-1">
                         <Clock className="h-3 w-3" />
                         {format(session.startAt, "HH:mm")}
                       </p>
@@ -212,7 +212,7 @@ export default async function AdminDashboard() {
                           ? "default"
                           : "secondary"
                       }
-                      className="min-w-[60px] justify-center"
+                      className="min-w-[50px] sm:min-w-[60px] justify-center"
                     >
                       {session.reservations.length}/{session.capacity}
                     </Badge>

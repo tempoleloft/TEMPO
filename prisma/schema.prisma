@@ -34,8 +34,9 @@ enum ReservationStatus {
 }
 
 enum ProductKind {
-  SINGLE
-  PACK
+  SINGLE    // Single class credit
+  PACK      // Pack of class credits
+  MERCH     // Merchandise (no credits)
 }
 
 enum PurchaseStatus {
@@ -284,14 +285,15 @@ model Reservation {
 
 model Product {
   id            String      @id @default(cuid())
-  name          String      // "Cours à l'unité", "Carte 5 cours", "Carte 10 cours"
+  name          String      // "Cours à l'unité", "Carte 5 cours", "T-shirt", etc.
   description   String?
   kind          ProductKind
-  credits       Int         @default(0) // 0 for SINGLE, 5 or 10 for PACK
+  credits       Int         @default(0) // 0 for MERCH, 1 for SINGLE, 5/10 for PACK
   priceCents    Int         // Prix en centimes (ex: 2500 = 25€)
   currency      String      @default("EUR")
+  imageUrl      String?     // URL de l'image du produit
   stripePriceId String?     @unique
-  validityDays  Int?        // Nombre de jours de validité (null = illimité)
+  validityDays  Int?        // Nombre de jours de validité (null = illimité, ignored for MERCH)
   active        Boolean     @default(true)
   sortOrder     Int         @default(0)
   createdAt     DateTime    @default(now())

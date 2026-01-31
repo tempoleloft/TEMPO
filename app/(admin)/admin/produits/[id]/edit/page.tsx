@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,15 +8,53 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ArrowLeft, Loader2 } from "lucide-react"
-import { createProduct, CreateProductInput } from "@/lib/actions/admin"
+import { updateProduct, CreateProductInput } from "@/lib/actions/admin"
 
-export default function NewProductPage() {
+interface EditProductPageProps {
+  params: { id: string }
+}
+
+interface Product {
+  id: string
+  name: string
+  description: string | null
+  kind: "SINGLE" | "PACK" | "MERCH"
+  priceCents: number
+  credits: number
+  validityDays: number | null
+  imageUrl: string | null
+  active: boolean
+}
+
+export default function EditProductPage({ params }: EditProductPageProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  const [isFetching, setIsFetching] = useState(true)
   const [error, setError] = useState("")
+  const [product, setProduct] = useState<Product | null>(null)
   const [kind, setKind] = useState<"SINGLE" | "PACK" | "MERCH">("SINGLE")
 
   const isMerch = kind === "MERCH"
+
+  useEffect(() => {
+    async function fetchProduct() {
+      try {
+        const response = await fetch(`/api/admin/products/${params.id}`)
+        if (response.ok) {
+          const data = await response.json()
+          setProduct(data)
+          setKind(data.kind)
+        } else {
+          setError("Produit non trouvé")
+        }
+      } catch (err) {
+        setError("Erreur lors du chargement")
+      } finally {
+        setIsFetching(false)
+      }
+    }
+    fetchProduct()
+  }, [params.id])
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -25,7 +63,7 @@ export default function NewProductPage() {
 
     const formData = new FormData(e.currentTarget)
     
-    const data: CreateProductInput = {
+    const data: Partial<CreateProductInput> = {
       name: formData.get("name") as string,
       description: formData.get("description") as string,
       kind: formData.get("kind") as "SINGLE" | "PACK" | "MERCH",
@@ -36,18 +74,45 @@ export default function NewProductPage() {
     }
 
     try {
-      const result = await createProduct(data)
+      const result = await updateProduct(params.id, data)
 
       if (result.success) {
         router.push("/admin/produits")
       } else {
-        setError(result.error || "Erreur lors de la création")
+        setError(result.error || "Erreur lors de la mise à jour")
       }
     } catch (err) {
       setError("Une erreur est survenue")
     } finally {
       setIsLoading(false)
     }
+  }
+
+  if (isFetching) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-tempo-bordeaux" />
+      </div>
+    )
+  }
+
+  if (!product) {
+    return (
+      <div className="space-y-8">
+        <div className="flex items-center gap-4">
+          <Button asChild variant="ghost" size="icon">
+            <Link href="/admin/produits">
+              <ArrowLeft className="h-5 w-5" />
+            </Link>
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold text-tempo-bordeaux">
+              Produit non trouvé
+            </h1>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -61,10 +126,10 @@ export default function NewProductPage() {
         </Button>
         <div>
           <h1 className="text-3xl font-bold text-tempo-bordeaux">
-            Nouveau produit
+            Modifier le produit
           </h1>
           <p className="text-muted-foreground mt-1">
-            Créer une nouvelle offre (cours ou merchandising)
+            {product.name}
           </p>
         </div>
       </div>
@@ -74,7 +139,7 @@ export default function NewProductPage() {
         <CardHeader>
           <CardTitle>Informations du produit</CardTitle>
           <CardDescription>
-            Remplissez les détails de l'offre
+            Modifiez les détails du produit
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -91,6 +156,7 @@ export default function NewProductPage() {
                 <Input
                   id="name"
                   name="name"
+                  defaultValue={product.name}
                   placeholder={isMerch ? "Ex: T-shirt Tempo" : "Ex: Pack 10 cours"}
                   required
                 />
@@ -118,6 +184,7 @@ export default function NewProductPage() {
               <Input
                 id="description"
                 name="description"
+                defaultValue={product.description || ""}
                 placeholder={isMerch ? "Ex: T-shirt 100% coton, logo brodé" : "Ex: Idéal pour les pratiquants réguliers"}
               />
             </div>
@@ -128,11 +195,21 @@ export default function NewProductPage() {
                 id="imageUrl"
                 name="imageUrl"
                 type="url"
+                defaultValue={product.imageUrl || ""}
                 placeholder="https://exemple.com/image.jpg"
               />
               <p className="text-xs text-muted-foreground">
                 Entrez l'URL d'une image (hébergée sur Imgur, Google Drive, etc.)
               </p>
+              {product.imageUrl && (
+                <div className="mt-2">
+                  <img
+                    src={product.imageUrl}
+                    alt="Aperçu"
+                    className="w-24 h-24 object-cover rounded border"
+                  />
+                </div>
+              )}
             </div>
 
             <div className="grid md:grid-cols-3 gap-4">
@@ -144,6 +221,7 @@ export default function NewProductPage() {
                   type="number"
                   step="0.01"
                   min="1"
+                  defaultValue={(product.priceCents / 100).toFixed(2)}
                   placeholder="29.00"
                   required
                 />
@@ -158,6 +236,7 @@ export default function NewProductPage() {
                       name="credits"
                       type="number"
                       min="1"
+                      defaultValue={product.credits}
                       placeholder="10"
                       required={!isMerch}
                     />
@@ -170,6 +249,7 @@ export default function NewProductPage() {
                       name="validityDays"
                       type="number"
                       min="1"
+                      defaultValue={product.validityDays || ""}
                       placeholder="90"
                       required={!isMerch}
                     />
@@ -179,12 +259,10 @@ export default function NewProductPage() {
             </div>
 
             <div className="bg-tempo-taupe/10 p-4 rounded-lg">
-              <h4 className="font-medium mb-2">Récapitulatif</h4>
+              <h4 className="font-medium mb-2">Statut</h4>
               <p className="text-sm text-muted-foreground">
-                {isMerch 
-                  ? "Le produit merchandising sera créé. Les clients pourront l'acheter mais il ne donnera pas de crédits de cours."
-                  : "Le produit sera créé et immédiatement visible sur la page des tarifs. Vous pourrez le désactiver à tout moment."
-                }
+                Ce produit est actuellement {product.active ? "actif" : "inactif"}.
+                Vous pouvez changer son statut depuis la liste des produits.
               </p>
             </div>
 
@@ -195,7 +273,7 @@ export default function NewProductPage() {
                 className="bg-tempo-bordeaux hover:bg-tempo-noir"
               >
                 {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                Créer le produit
+                Enregistrer
               </Button>
               <Button
                 type="button"

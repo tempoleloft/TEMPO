@@ -90,14 +90,14 @@ export default async function ClientPlanningPage({ searchParams }: PageProps) {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-tempo-bordeaux">Planning</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold text-tempo-bordeaux">Planning</h1>
+          <p className="text-muted-foreground mt-1 text-sm sm:text-base">
             Réservez vos cours pour la semaine
           </p>
         </div>
-        <div className="text-right">
+        <div className="text-left sm:text-right bg-white p-3 rounded-lg shadow-sm">
           <p className="text-sm text-muted-foreground">Crédits disponibles</p>
           <p className="text-2xl font-bold text-tempo-bordeaux">
             {wallet?.creditsBalance || 0}
@@ -106,10 +106,12 @@ export default async function ClientPlanningPage({ searchParams }: PageProps) {
       </div>
 
       {/* Week Navigation */}
-      <div className="flex items-center justify-between bg-white rounded-lg p-4 shadow-sm">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white rounded-lg p-4 shadow-sm">
         <Button
           asChild
           variant="outline"
+          size="sm"
+          className="w-full sm:w-auto order-2 sm:order-1"
           disabled={weekOffset <= 0}
         >
           <Link href={`/app/planning?week=${weekOffset - 1}`}>
@@ -117,13 +119,15 @@ export default async function ClientPlanningPage({ searchParams }: PageProps) {
           </Link>
         </Button>
         
-        <h2 className="text-lg font-semibold text-tempo-bordeaux">
+        <h2 className="text-base sm:text-lg font-semibold text-tempo-bordeaux text-center order-1 sm:order-2">
           {format(weekStart, "d MMM", { locale: fr })} - {format(weekEnd, "d MMM yyyy", { locale: fr })}
         </h2>
         
         <Button
           asChild
           variant="outline"
+          size="sm"
+          className="w-full sm:w-auto order-3"
           disabled={weekOffset >= 4}
         >
           <Link href={`/app/planning?week=${weekOffset + 1}`}>
@@ -162,26 +166,26 @@ export default async function ClientPlanningPage({ searchParams }: PageProps) {
                   return (
                     <div
                       key={classSession.id}
-                      className={`p-4 flex items-center justify-between ${
+                      className={`p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
                         isBooked ? "bg-green-50" : isOnWaitlist ? "bg-amber-50" : ""
                       }`}
                     >
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-3 sm:gap-4">
                         <div 
-                          className="w-1 h-14 rounded-full"
+                          className="w-1 h-12 sm:h-14 rounded-full shrink-0"
                           style={{ backgroundColor: classSession.classType.colorTag || "#42101B" }}
                         />
-                        <div>
-                          <p className="font-semibold text-tempo-bordeaux">
-                            {classSession.classType.title}
+                        <div className="min-w-0 flex-1">
+                          <p className="font-semibold text-tempo-bordeaux flex flex-wrap items-center gap-2">
+                            <span className="truncate">{classSession.classType.title}</span>
                             {isBooked && (
-                              <Badge className="ml-2 bg-green-600">Réservé</Badge>
+                              <Badge className="bg-green-600 text-xs">Réservé</Badge>
                             )}
                             {isOnWaitlist && (
-                              <Badge className="ml-2 bg-amber-500">En attente #{waitlistPosition}</Badge>
+                              <Badge className="bg-amber-500 text-xs">Attente #{waitlistPosition}</Badge>
                             )}
                           </p>
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
+                          <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground mt-1">
                             <span className="flex items-center gap-1">
                               <Clock className="h-3 w-3" />
                               {format(classSession.startAt, "HH:mm")} - {format(classSession.endAt, "HH:mm")}
@@ -191,7 +195,7 @@ export default async function ClientPlanningPage({ searchParams }: PageProps) {
                               {classSession.teacher.displayName}
                             </span>
                             {classSession.location && (
-                              <span className="flex items-center gap-1">
+                              <span className="flex items-center gap-1 hidden sm:flex">
                                 <MapPin className="h-3 w-3" />
                                 {classSession.location}
                               </span>
@@ -200,23 +204,23 @@ export default async function ClientPlanningPage({ searchParams }: PageProps) {
                         </div>
                       </div>
                       
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4 pl-4 sm:pl-0">
                         {isFull ? (
-                          <div className="flex flex-col items-end gap-1">
-                            <Badge variant="destructive">COMPLET</Badge>
+                          <div className="flex flex-col items-start sm:items-end gap-1">
+                            <Badge variant="destructive" className="text-xs">COMPLET</Badge>
                             {waitlistCount > 0 && waitlistCount < 3 && (
                               <span className="text-xs text-muted-foreground">
-                                {3 - waitlistCount} place{3 - waitlistCount > 1 ? "s" : ""} en liste d'attente
+                                {3 - waitlistCount} place{3 - waitlistCount > 1 ? "s" : ""} attente
                               </span>
                             )}
                             {waitlistCount >= 3 && (
                               <span className="text-xs text-muted-foreground">
-                                Liste d'attente pleine
+                                Attente pleine
                               </span>
                             )}
                           </div>
                         ) : (
-                          <Badge variant="secondary">
+                          <Badge variant="secondary" className="text-xs">
                             {spotsLeft} place{spotsLeft > 1 ? "s" : ""}
                           </Badge>
                         )}

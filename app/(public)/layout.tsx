@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { Button } from "@/components/ui/button"
 import { UserMenu } from "@/components/layout/user-menu"
+import { MobileNav } from "@/components/layout/mobile-nav"
 
 export const dynamic = 'force-dynamic'
 
@@ -34,9 +35,9 @@ export default async function PublicLayout({
   return (
     <div className="min-h-screen bg-tempo-creme">
       {/* Navigation */}
-      <nav className="sticky top-0 z-50 bg-tempo-bordeaux text-tempo-creme px-6 py-4">
+      <nav className="sticky top-0 z-50 bg-tempo-bordeaux text-tempo-creme px-4 sm:px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <Link href="/" className="text-2xl font-bold tracking-tight">
+          <Link href="/" className="text-xl sm:text-2xl font-bold tracking-tight">
             TEMPO
           </Link>
           <div className="hidden md:flex items-center gap-8 text-sm">
@@ -53,7 +54,7 @@ export default async function PublicLayout({
               Tarifs
             </Link>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-4">
             {session ? (
               <UserMenu 
                 userName={userName || session.user.email || "Mon compte"} 
@@ -74,22 +75,28 @@ export default async function PublicLayout({
               </>
             )}
           </div>
+          {/* Mobile Menu */}
+          <MobileNav 
+            isLoggedIn={!!session} 
+            dashboardLink={dashboardLink}
+            userName={userName || session?.user?.email || undefined}
+          />
         </div>
       </nav>
       
       {children}
 
       {/* Footer */}
-      <footer className="py-12 px-6 bg-tempo-noir text-tempo-creme/80">
+      <footer className="py-8 sm:py-12 px-4 sm:px-6 bg-tempo-noir text-tempo-creme/80">
         <div className="max-w-6xl mx-auto">
-          <div className="grid md:grid-cols-4 gap-8 mb-8">
-            <div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 mb-8">
+            <div className="col-span-2 md:col-span-1">
               <h4 className="text-tempo-creme font-bold text-xl mb-4">TEMPO</h4>
               <p className="text-sm opacity-70">Le Loft</p>
               <p className="text-sm opacity-70">Paris Marais</p>
             </div>
             <div>
-              <h5 className="font-semibold mb-4">Studio</h5>
+              <h5 className="font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Studio</h5>
               <ul className="space-y-2 text-sm opacity-70">
                 <li><Link href="/studio" className="hover:opacity-100">Notre espace</Link></li>
                 <li><Link href="/profs" className="hover:opacity-100">Professeurs</Link></li>
@@ -97,21 +104,21 @@ export default async function PublicLayout({
               </ul>
             </div>
             <div>
-              <h5 className="font-semibold mb-4">Infos</h5>
+              <h5 className="font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Infos</h5>
               <ul className="space-y-2 text-sm opacity-70">
                 <li><Link href="/tarifs" className="hover:opacity-100">Tarifs</Link></li>
                 <li><Link href="/faq" className="hover:opacity-100">FAQ</Link></li>
                 <li><Link href="/contact" className="hover:opacity-100">Contact</Link></li>
               </ul>
             </div>
-            <div>
-              <h5 className="font-semibold mb-4">Contact</h5>
+            <div className="col-span-2 md:col-span-1">
+              <h5 className="font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Contact</h5>
               <p className="text-sm opacity-70">41 Rue du Temple</p>
               <p className="text-sm opacity-70">75004 Paris</p>
               <p className="text-sm opacity-70 mt-2">hello@tempo-leloft.com</p>
             </div>
           </div>
-          <div className="border-t border-tempo-creme/10 pt-8 text-center text-sm opacity-50">
+          <div className="border-t border-tempo-creme/10 pt-6 sm:pt-8 text-center text-xs sm:text-sm opacity-50">
             © 2026 Tempo – Le Loft. Tous droits réservés.
           </div>
         </div>

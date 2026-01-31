@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server"
 import { headers } from "next/headers"
-import { stripe, isStripeConfigured } from "@/lib/stripe"
+import { getStripe, isStripeConfigured } from "@/lib/stripe"
 import { db } from "@/lib/db"
 import Stripe from "stripe"
 
 export const dynamic = 'force-dynamic'
 
 export async function POST(request: Request) {
+  const stripe = getStripe()
   if (!isStripeConfigured() || !stripe) {
     return NextResponse.json(
       { error: "Stripe not configured" },
@@ -28,10 +29,20 @@ export async function POST(request: Request) {
   let event: Stripe.Event
 
   try {
+    // IMPORTANT: Trim the webhook secret to remove any trailing newlines
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET?.trim()
+    if (!webhookSecret) {
+      console.error("Missing STRIPE_WEBHOOK_SECRET")
+      return NextResponse.json(
+        { error: "Webhook secret not configured" },
+        { status: 500 }
+      )
+    }
+    
     event = stripe.webhooks.constructEvent(
       body,
       signature,
-      process.env.STRIPE_WEBHOOK_SECRET!
+      webhookSecret
     )
   } catch (err) {
     console.error("Webhook signature verification failed:", err)

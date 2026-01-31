@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { signOut } from "next-auth/react"
@@ -12,7 +13,9 @@ import {
   User, 
   Users,
   LayoutGrid,
-  BookOpen
+  BookOpen,
+  Menu,
+  X
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -54,6 +57,7 @@ interface DashboardNavProps {
 
 export function DashboardNav({ role, userName }: DashboardNavProps) {
   const pathname = usePathname()
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   const navItems = role === "ADMIN" 
     ? adminNav 
@@ -61,53 +65,144 @@ export function DashboardNav({ role, userName }: DashboardNavProps) {
     ? teacherNav 
     : clientNav
 
+  const roleLabel = role === "ADMIN" ? "Administration" : role === "TEACHER" ? "Espace Prof" : "Mon Espace"
+
   return (
-    <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r bg-white">
-      <div className="flex h-full flex-col">
-        {/* Logo */}
-        <div className="border-b px-6 py-4">
+    <>
+      {/* Mobile Header */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b md:hidden">
+        <div className="flex items-center justify-between px-4 py-3">
           <Link href="/" className="text-xl font-bold text-tempo-bordeaux">
             TEMPO
           </Link>
-          <p className="text-xs text-muted-foreground mt-1">
-            {role === "ADMIN" ? "Administration" : role === "TEACHER" ? "Espace Prof" : "Mon Espace"}
-          </p>
-        </div>
-
-        {/* Navigation */}
-        <nav className="flex-1 space-y-1 px-3 py-4">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
-                pathname === item.href
-                  ? "bg-tempo-bordeaux text-white"
-                  : "text-muted-foreground hover:bg-tempo-taupe/30 hover:text-tempo-bordeaux"
-              )}
-            >
-              {item.icon}
-              {item.title}
-            </Link>
-          ))}
-        </nav>
-
-        {/* User section */}
-        <div className="border-t p-4">
-          {userName && (
-            <p className="text-sm font-medium mb-2 truncate">{userName}</p>
-          )}
           <Button
             variant="ghost"
-            className="w-full justify-start text-muted-foreground hover:text-tempo-bordeaux"
-            onClick={() => signOut({ callbackUrl: "/" })}
+            size="icon"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
-            <LogOut className="h-4 w-4 mr-2" />
-            Déconnexion
+            {isMobileMenuOpen ? (
+              <X className="h-6 w-6" />
+            ) : (
+              <Menu className="h-6 w-6" />
+            )}
           </Button>
         </div>
-      </div>
-    </aside>
+      </header>
+
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Mobile Menu Drawer */}
+      <aside className={cn(
+        "fixed top-0 left-0 z-50 h-screen w-72 bg-white border-r transform transition-transform duration-300 ease-in-out md:hidden",
+        isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+      )}>
+        <div className="flex h-full flex-col">
+          {/* Logo */}
+          <div className="border-b px-6 py-4 flex items-center justify-between">
+            <div>
+              <Link href="/" className="text-xl font-bold text-tempo-bordeaux">
+                TEMPO
+              </Link>
+              <p className="text-xs text-muted-foreground mt-1">{roleLabel}</p>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
+
+          {/* Navigation */}
+          <nav className="flex-1 space-y-1 px-3 py-4 overflow-y-auto">
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-3 text-sm transition-colors",
+                  pathname === item.href
+                    ? "bg-tempo-bordeaux text-white"
+                    : "text-muted-foreground hover:bg-tempo-taupe/30 hover:text-tempo-bordeaux"
+                )}
+              >
+                {item.icon}
+                {item.title}
+              </Link>
+            ))}
+          </nav>
+
+          {/* User section */}
+          <div className="border-t p-4">
+            {userName && (
+              <p className="text-sm font-medium mb-2 truncate">{userName}</p>
+            )}
+            <Button
+              variant="ghost"
+              className="w-full justify-start text-muted-foreground hover:text-tempo-bordeaux"
+              onClick={() => signOut({ callbackUrl: "/" })}
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Déconnexion
+            </Button>
+          </div>
+        </div>
+      </aside>
+
+      {/* Desktop Sidebar */}
+      <aside className="hidden md:block fixed left-0 top-0 z-40 h-screen w-64 border-r bg-white">
+        <div className="flex h-full flex-col">
+          {/* Logo */}
+          <div className="border-b px-6 py-4">
+            <Link href="/" className="text-xl font-bold text-tempo-bordeaux">
+              TEMPO
+            </Link>
+            <p className="text-xs text-muted-foreground mt-1">{roleLabel}</p>
+          </div>
+
+          {/* Navigation */}
+          <nav className="flex-1 space-y-1 px-3 py-4">
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+                  pathname === item.href
+                    ? "bg-tempo-bordeaux text-white"
+                    : "text-muted-foreground hover:bg-tempo-taupe/30 hover:text-tempo-bordeaux"
+                )}
+              >
+                {item.icon}
+                {item.title}
+              </Link>
+            ))}
+          </nav>
+
+          {/* User section */}
+          <div className="border-t p-4">
+            {userName && (
+              <p className="text-sm font-medium mb-2 truncate">{userName}</p>
+            )}
+            <Button
+              variant="ghost"
+              className="w-full justify-start text-muted-foreground hover:text-tempo-bordeaux"
+              onClick={() => signOut({ callbackUrl: "/" })}
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Déconnexion
+            </Button>
+          </div>
+        </div>
+      </aside>
+    </>
   )
 }

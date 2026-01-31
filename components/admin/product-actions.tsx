@@ -66,7 +66,6 @@ export function ProductActions({ productId, productName, hasPurchases }: Product
             size="sm"
             className="text-red-600 hover:text-red-700 hover:bg-red-50"
             title="Supprimer"
-            disabled={hasPurchases}
           >
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -75,8 +74,17 @@ export function ProductActions({ productId, productName, hasPurchases }: Product
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer ce produit ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer "{productName}" ?
-              Cette action est irréversible.
+              {hasPurchases ? (
+                <span className="text-orange-600">
+                  Ce produit a des achats associés et ne peut pas être supprimé.
+                  Vous pouvez le désactiver à la place.
+                </span>
+              ) : (
+                <>
+                  Êtes-vous sûr de vouloir supprimer "{productName}" ?
+                  Cette action est irréversible.
+                </>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           {error && (
@@ -86,14 +94,16 @@ export function ProductActions({ productId, productName, hasPurchases }: Product
           )}
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              disabled={isDeleting}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              {isDeleting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Supprimer
-            </AlertDialogAction>
+            {!hasPurchases && (
+              <AlertDialogAction
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                {isDeleting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Supprimer
+              </AlertDialogAction>
+            )}
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

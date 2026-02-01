@@ -169,7 +169,7 @@ export default function Home() {
       </section>
 
       {/* Café Section */}
-      <section className="py-12 sm:py-24 px-4 sm:px-6 bg-tempo-creme">
+      <section className="py-12 sm:py-24 px-4 sm:px-6 bg-tempo-noir">
         <div className="max-w-6xl mx-auto">
           <div className="grid md:grid-cols-2 gap-8 sm:gap-12 items-center">
             <div className="relative aspect-[4/3] rounded-2xl overflow-hidden">
@@ -182,20 +182,20 @@ export default function Home() {
             </div>
             <div className="space-y-6">
               <Image
-                src="/logo-cafe-dark.jpg"
+                src="/logo-cafe-white.png"
                 alt="TEMPO Le Café"
-                width={160}
-                height={60}
-                className="h-14 w-auto"
+                width={180}
+                height={70}
+                className="h-16 w-auto"
               />
-              <p className="text-tempo-noir/70 text-base sm:text-lg leading-relaxed">
+              <p className="text-tempo-creme/80 text-base sm:text-lg leading-relaxed">
                 Avant votre cours ou après votre pratique, prolongez votre moment 
                 au Café. Un espace chaleureux avec café de spécialité, 
                 snacks healthy et ambiance coworking.
               </p>
               <Button 
                 asChild
-                className="bg-tempo-bordeaux text-tempo-creme hover:bg-tempo-noir"
+                className="bg-tempo-creme text-tempo-noir hover:bg-tempo-taupe"
               >
                 <Link href="/cafe">Découvrir le café</Link>
               </Button>

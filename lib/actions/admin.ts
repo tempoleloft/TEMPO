@@ -102,6 +102,62 @@ export async function createSession(data: CreateSessionInput) {
 }
 
 // ============================================================================
+// CREATE CLASS TYPE
+// ============================================================================
+
+const createClassTypeSchema = z.object({
+  title: z.string().min(1, "Nom requis").max(100, "Nom trop long"),
+  description: z.string().optional(),
+  durationMin: z.number().min(15, "Durée minimum 15 min").max(180, "Durée maximum 180 min"),
+})
+
+export type CreateClassTypeInput = z.infer<typeof createClassTypeSchema>
+
+export async function createClassType(data: CreateClassTypeInput) {
+  const session = await auth()
+  
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return { success: false, error: "Non autorisé" }
+  }
+
+  try {
+    const parsed = createClassTypeSchema.safeParse(data)
+    
+    if (!parsed.success) {
+      return { 
+        success: false, 
+        error: parsed.error.errors[0]?.message || "Données invalides" 
+      }
+    }
+
+    const { title, description, durationMin } = parsed.data
+
+    // Check if class type with same title exists
+    const existing = await db.classType.findFirst({
+      where: { title: { equals: title, mode: "insensitive" } },
+    })
+
+    if (existing) {
+      return { success: false, error: "Un type de cours avec ce nom existe déjà" }
+    }
+
+    // Create class type
+    const classType = await db.classType.create({
+      data: {
+        title,
+        description: description || null,
+        durationMin,
+      },
+    })
+
+    return { success: true, classTypeId: classType.id }
+  } catch (error) {
+    console.error("Create class type error:", error)
+    return { success: false, error: "Erreur lors de la création du type de cours" }
+  }
+}
+
+// ============================================================================
 // CREATE TEACHER
 // ============================================================================
 

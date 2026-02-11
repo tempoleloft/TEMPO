@@ -6,9 +6,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ArrowLeft } from "lucide-react"
+import { Textarea } from "@/components/ui/textarea"
+import { ArrowLeft, Plus } from "lucide-react"
 import Link from "next/link"
-import { createSession } from "@/lib/actions/admin"
+import { createSession, createClassType } from "@/lib/actions/admin"
 
 interface ClassType {
   id: string
@@ -28,6 +29,12 @@ export default function NewSessionPage() {
   
   const [classTypes, setClassTypes] = useState<ClassType[]>([])
   const [teachers, setTeachers] = useState<Teacher[]>([])
+  const [showNewClassType, setShowNewClassType] = useState(false)
+  const [newClassType, setNewClassType] = useState({
+    title: "",
+    description: "",
+    durationMin: 60,
+  })
   
   const [formData, setFormData] = useState({
     classTypeId: "",
@@ -66,8 +73,34 @@ export default function NewSessionPage() {
     setIsLoading(true)
 
     try {
+      let classTypeId = formData.classTypeId
+
+      // Si nouveau type de cours, le créer d'abord
+      if (showNewClassType) {
+        if (!newClassType.title.trim()) {
+          setError("Le nom du type de cours est requis")
+          setIsLoading(false)
+          return
+        }
+
+        const classTypeResult = await createClassType({
+          title: newClassType.title.trim(),
+          description: newClassType.description.trim() || undefined,
+          durationMin: newClassType.durationMin,
+        })
+
+        if (!classTypeResult.success || !classTypeResult.classTypeId) {
+          setError(classTypeResult.error || "Erreur lors de la création du type de cours")
+          setIsLoading(false)
+          return
+        }
+
+        classTypeId = classTypeResult.classTypeId
+      }
+
       const result = await createSession({
         ...formData,
+        classTypeId,
         capacity: Number(formData.capacity),
       })
 
@@ -121,9 +154,17 @@ export default function NewSessionPage() {
               <Label htmlFor="classTypeId">Type de cours *</Label>
               <select
                 id="classTypeId"
-                value={formData.classTypeId}
-                onChange={(e) => setFormData({ ...formData, classTypeId: e.target.value })}
-                required
+                value={showNewClassType ? "__new__" : formData.classTypeId}
+                onChange={(e) => {
+                  if (e.target.value === "__new__") {
+                    setShowNewClassType(true)
+                    setFormData({ ...formData, classTypeId: "" })
+                  } else {
+                    setShowNewClassType(false)
+                    setFormData({ ...formData, classTypeId: e.target.value })
+                  }
+                }}
+                required={!showNewClassType}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 <option value="">Sélectionner un type</option>
@@ -132,8 +173,63 @@ export default function NewSessionPage() {
                     {ct.title} ({ct.durationMin} min)
                   </option>
                 ))}
+                <option value="__new__">➕ Créer un nouveau type...</option>
               </select>
             </div>
+
+            {showNewClassType && (
+              <div className="p-4 border border-dashed border-tempo-bordeaux/30 rounded-lg bg-tempo-taupe/10 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium text-tempo-bordeaux flex items-center gap-2">
+                    <Plus className="h-4 w-4" />
+                    Nouveau type de cours
+                  </h4>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setShowNewClassType(false)
+                      setNewClassType({ title: "", description: "", durationMin: 60 })
+                    }}
+                  >
+                    Annuler
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="newTitle">Nom du cours *</Label>
+                  <Input
+                    id="newTitle"
+                    placeholder="Ex: Yoga Nidra, Stretching..."
+                    value={newClassType.title}
+                    onChange={(e) => setNewClassType({ ...newClassType, title: e.target.value })}
+                    required={showNewClassType}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="newDescription">Description</Label>
+                  <Textarea
+                    id="newDescription"
+                    placeholder="Description du cours..."
+                    value={newClassType.description}
+                    onChange={(e) => setNewClassType({ ...newClassType, description: e.target.value })}
+                    rows={2}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="newDuration">Durée (minutes) *</Label>
+                  <Input
+                    id="newDuration"
+                    type="number"
+                    min={15}
+                    max={180}
+                    value={newClassType.durationMin}
+                    onChange={(e) => setNewClassType({ ...newClassType, durationMin: parseInt(e.target.value) || 60 })}
+                    required={showNewClassType}
+                  />
+                </div>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="teacherId">Professeur *</Label>

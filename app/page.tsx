@@ -67,7 +67,7 @@ export default function Home() {
           
           <p className="text-base sm:text-lg md:text-xl opacity-80 max-w-2xl mx-auto leading-relaxed">
             Un studio où le mouvement rencontre le calme. 
-            Yoga Vinyasa, Hatha, Pilates Mat et Reformer 
+            Yoga Vinyasa, Hatha, Pilates Mat et Barre au Sol 
             dans un loft chaleureux au cœur du Marais.
           </p>
           

@@ -112,7 +112,7 @@ model TeacherProfile {
   displayName String
   bio         String?
   photoUrl    String?
-  specialties String[] // ["Yoga", "Pilates", "Reformer"]
+  specialties String[] // ["Yoga", "Pilates", "Barre au Sol"]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -212,7 +212,7 @@ model WaitlistEntry {
 
 model ClassType {
   id          String   @id @default(cuid())
-  title       String   // "Yoga Vinyasa", "Pilates Mat", "Reformer"
+  title       String   // "Yoga Vinyasa", "Pilates Mat", "Barre au Sol"
   description String?
   durationMin Int      @default(60)
   level       String?  // "Tous niveaux", "Débutant", "Intermédiaire", "Avancé"
@@ -233,7 +233,7 @@ model Session {
   startAt     DateTime
   endAt       DateTime
   capacity    Int           @default(12)
-  location    String?       // "Salle principale", "Studio Reformer"
+  location    String?       // "Salle principale", "Studio"
   status      SessionStatus @default(SCHEDULED)
   notes       String?
   createdById String?

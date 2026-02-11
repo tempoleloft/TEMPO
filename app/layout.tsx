@@ -3,8 +3,8 @@ import "./globals.css"
 
 export const metadata: Metadata = {
   title: "Tempo – Le Loft | Studio Yoga & Pilates Paris Marais",
-  description: "Studio de yoga et pilates dans le Marais. Your pace. Your tempo. Cours de Vinyasa, Hatha, Pilates Mat et Reformer.",
-  keywords: ["yoga", "pilates", "paris", "marais", "studio", "vinyasa", "reformer"],
+  description: "Studio de yoga et pilates dans le Marais. Your pace. Your tempo. Cours de Vinyasa, Hatha, Pilates Mat et Barre au Sol.",
+  keywords: ["yoga", "pilates", "paris", "marais", "studio", "vinyasa", "barre au sol"],
 }
 
 export default function RootLayout({

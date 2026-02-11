@@ -3,8 +3,23 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Coffee, Wifi, Armchair, Clock, MapPin, Leaf } from "lucide-react"
+import { db } from "@/lib/db"
 
-export default function CafePage() {
+async function getCafeMenuItems() {
+  const items = await db.cafeMenuItem.findMany({
+    where: { isActive: true },
+    orderBy: [
+      { sortOrder: "asc" },
+      { name: "asc" },
+    ],
+  })
+  return items
+}
+
+export default async function CafePage() {
+  const menuItems = await getCafeMenuItems()
+  const boissons = menuItems.filter(item => item.category === "boissons")
+  const food = menuItems.filter(item => item.category === "food")
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -117,17 +132,18 @@ export default function CafePage() {
                 Boissons
               </h3>
               <div className="space-y-4">
-                <MenuItem name="Espresso" price="2,50" />
-                <MenuItem name="Americano" price="3,00" />
-                <MenuItem name="Flat White" price="4,50" />
-                <MenuItem name="Latte" price="4,50" />
-                <MenuItem name="Cappuccino" price="4,50" />
-                <MenuItem name="Matcha Latte" price="5,00" description="Matcha bio du Japon" />
-                <MenuItem name="Golden Latte" price="5,00" description="Curcuma, gingembre, lait d'avoine" />
-                <MenuItem name="Chai Latte" price="4,50" />
-                <MenuItem name="Chocolat chaud" price="4,00" />
-                <MenuItem name="Thé bio" price="3,50" description="Sélection de thés en vrac" />
-                <MenuItem name="Jus frais" price="5,50" description="Orange, pomme-gingembre, vert detox" />
+                {boissons.length > 0 ? (
+                  boissons.map((item) => (
+                    <MenuItem 
+                      key={item.id} 
+                      name={item.name} 
+                      price={Number(item.price).toFixed(2).replace(".", ",")} 
+                      description={item.description || undefined} 
+                    />
+                  ))
+                ) : (
+                  <p className="text-tempo-noir/50 italic">Carte en cours de mise à jour...</p>
+                )}
               </div>
             </div>
 
@@ -138,13 +154,18 @@ export default function CafePage() {
                 À grignoter
               </h3>
               <div className="space-y-4">
-                <MenuItem name="Avocado Toast" price="9,00" description="Pain au levain, avocat, œuf poché" />
-                <MenuItem name="Granola Bowl" price="8,00" description="Yaourt, granola maison, fruits frais" />
-                <MenuItem name="Banana Bread" price="4,00" description="Fait maison, sans gluten disponible" />
-                <MenuItem name="Energy Balls" price="3,00" description="Dattes, cacao, noisettes (x3)" />
-                <MenuItem name="Cookie" price="3,50" description="Chocolat noir ou avoine-raisins" />
-                <MenuItem name="Tartine du jour" price="8,50" description="Selon l'inspiration du chef" />
-                <MenuItem name="Salade healthy" price="12,00" description="Quinoa, légumes de saison, graines" />
+                {food.length > 0 ? (
+                  food.map((item) => (
+                    <MenuItem 
+                      key={item.id} 
+                      name={item.name} 
+                      price={Number(item.price).toFixed(2).replace(".", ",")} 
+                      description={item.description || undefined} 
+                    />
+                  ))
+                ) : (
+                  <p className="text-tempo-noir/50 italic">Carte en cours de mise à jour...</p>
+                )}
               </div>
             </div>
           </div>

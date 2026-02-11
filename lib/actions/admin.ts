@@ -1005,3 +1005,164 @@ export async function resetAttendance(reservationId: string) {
     return { success: false, error: "Erreur lors de la réinitialisation" }
   }
 }
+
+// ============================================================================
+// CAFE MENU MANAGEMENT
+// ============================================================================
+
+export async function getCafeMenuItems() {
+  try {
+    const items = await db.cafeMenuItem.findMany({
+      orderBy: [
+        { category: "asc" },
+        { sortOrder: "asc" },
+        { name: "asc" },
+      ],
+    })
+    
+    return { success: true, items }
+  } catch (error) {
+    console.error("Get cafe menu items error:", error)
+    return { success: false, error: "Erreur lors du chargement de la carte" }
+  }
+}
+
+export async function getActiveCafeMenuItems() {
+  try {
+    const items = await db.cafeMenuItem.findMany({
+      where: { isActive: true },
+      orderBy: [
+        { category: "asc" },
+        { sortOrder: "asc" },
+        { name: "asc" },
+      ],
+    })
+    
+    return { success: true, items }
+  } catch (error) {
+    console.error("Get active cafe menu items error:", error)
+    return { success: false, error: "Erreur lors du chargement de la carte" }
+  }
+}
+
+export async function createCafeMenuItem(data: {
+  name: string
+  price: number
+  description: string | null
+  category: string
+}) {
+  const authSession = await auth()
+  
+  if (!authSession?.user || authSession.user.role !== "ADMIN") {
+    return { success: false, error: "Non autorisé" }
+  }
+
+  try {
+    // Get max sortOrder for this category
+    const maxSort = await db.cafeMenuItem.findFirst({
+      where: { category: data.category },
+      orderBy: { sortOrder: "desc" },
+      select: { sortOrder: true },
+    })
+
+    const item = await db.cafeMenuItem.create({
+      data: {
+        name: data.name,
+        price: data.price,
+        description: data.description,
+        category: data.category,
+        sortOrder: (maxSort?.sortOrder ?? 0) + 1,
+      },
+    })
+
+    revalidatePath("/admin/cafe")
+    revalidatePath("/cafe")
+    
+    return { success: true, item }
+  } catch (error) {
+    console.error("Create cafe menu item error:", error)
+    return { success: false, error: "Erreur lors de la création" }
+  }
+}
+
+export async function updateCafeMenuItem(id: string, data: {
+  name?: string
+  price?: number
+  description?: string | null
+  sortOrder?: number
+}) {
+  const authSession = await auth()
+  
+  if (!authSession?.user || authSession.user.role !== "ADMIN") {
+    return { success: false, error: "Non autorisé" }
+  }
+
+  try {
+    const item = await db.cafeMenuItem.update({
+      where: { id },
+      data,
+    })
+
+    revalidatePath("/admin/cafe")
+    revalidatePath("/cafe")
+    
+    return { success: true, item }
+  } catch (error) {
+    console.error("Update cafe menu item error:", error)
+    return { success: false, error: "Erreur lors de la mise à jour" }
+  }
+}
+
+export async function deleteCafeMenuItem(id: string) {
+  const authSession = await auth()
+  
+  if (!authSession?.user || authSession.user.role !== "ADMIN") {
+    return { success: false, error: "Non autorisé" }
+  }
+
+  try {
+    await db.cafeMenuItem.delete({
+      where: { id },
+    })
+
+    revalidatePath("/admin/cafe")
+    revalidatePath("/cafe")
+    
+    return { success: true }
+  } catch (error) {
+    console.error("Delete cafe menu item error:", error)
+    return { success: false, error: "Erreur lors de la suppression" }
+  }
+}
+
+export async function toggleCafeMenuItemActive(id: string) {
+  const authSession = await auth()
+  
+  if (!authSession?.user || authSession.user.role !== "ADMIN") {
+    return { success: false, error: "Non autorisé" }
+  }
+
+  try {
+    const item = await db.cafeMenuItem.findUnique({
+      where: { id },
+      select: { isActive: true },
+    })
+
+    if (!item) {
+      return { success: false, error: "Produit non trouvé" }
+    }
+
+    await db.cafeMenuItem.update({
+      where: { id },
+      data: { isActive: !item.isActive },
+    })
+
+    revalidatePath("/admin/cafe")
+    revalidatePath("/cafe")
+    
+    return { success: true }
+  } catch (error) {
+    console.error("Toggle cafe menu item error:", error)
+    return { success: false, error: "Erreur lors de la modification" }
+  }
+}

@@ -372,3 +372,22 @@ model Settings {
   reminderHoursBefore   Int      @default(24)       // Heures avant pour le rappel
   updatedAt             DateTime @updatedAt
 }
+
+// ============================================================================
+// CAFE MENU (Carte du café)
+// ============================================================================
+
+model CafeMenuItem {
+  id          String   @id @default(cuid())
+  name        String                           // Nom du produit
+  price       Decimal  @db.Decimal(10, 2)      // Prix en euros
+  description String?                          // Description optionnelle
+  category    String                           // "boissons" ou "food"
+  sortOrder   Int      @default(0)             // Ordre d'affichage
+  isActive    Boolean  @default(true)          // Visible sur la carte
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([category])
+  @@index([isActive])
+}

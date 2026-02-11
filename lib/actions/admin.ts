@@ -193,7 +193,7 @@ export async function cancelSession(sessionId: string) {
             userId: reservation.user.id,
             delta: 1,
             reason: "CANCEL_REFUND",
-            note: `Remboursement - Cours annulé: ${session.classType.title}`,
+            notes: `Remboursement - Cours annulé: ${session.classType.title}`,
           },
         })
       }

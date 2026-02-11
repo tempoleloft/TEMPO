@@ -146,23 +146,32 @@ export async function cancelSession(sessionId: string) {
     const emailPromises: Promise<any>[] = []
     
     for (const reservation of session.reservations) {
-      // Refund credit
-      if (reservation.user.wallet) {
-        await db.wallet.update({
-          where: { id: reservation.user.wallet.id },
-          data: { creditsBalance: { increment: 1 } },
-        })
-
-        // Log the refund
-        await db.creditLedger.create({
+      // Refund credit - create wallet if doesn't exist
+      let wallet = reservation.user.wallet
+      
+      if (!wallet) {
+        wallet = await db.wallet.create({
           data: {
             userId: reservation.user.id,
-            delta: 1,
-            reason: "CANCEL_REFUND",
-            note: `Remboursement - Cours annulé: ${session.classType.title}`,
+            creditsBalance: 0,
           },
         })
       }
+      
+      await db.wallet.update({
+        where: { id: wallet.id },
+        data: { creditsBalance: { increment: 1 } },
+      })
+
+      // Log the refund
+      await db.creditLedger.create({
+        data: {
+          userId: reservation.user.id,
+          delta: 1,
+          reason: "CANCEL_REFUND",
+          note: `Remboursement - Cours annulé: ${session.classType.title}`,
+        },
+      })
 
       // Update reservation status
       await db.reservation.update({

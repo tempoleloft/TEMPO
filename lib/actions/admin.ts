@@ -114,7 +114,7 @@ export async function cancelSession(sessionId: string) {
   }
 
   try {
-    // Get session with reservations
+    // Get session with reservations first (outside transaction for read)
     const session = await db.session.findUnique({
       where: { id: sessionId },
       include: {
@@ -142,66 +142,75 @@ export async function cancelSession(sessionId: string) {
       return { success: false, error: "Ce cours est déjà annulé" }
     }
 
-    // Refund credits and send emails to all participants
-    const emailPromises: Promise<any>[] = []
+    // Prepare email data before transaction
+    const emailData: { email: string; firstName: string }[] = []
     
     for (const reservation of session.reservations) {
-      // Refund credit - create wallet if doesn't exist
-      let wallet = reservation.user.wallet
-      
-      if (!wallet) {
-        wallet = await db.wallet.create({
-          data: {
-            userId: reservation.user.id,
-            creditsBalance: 0,
-          },
-        })
-      }
-      
-      await db.wallet.update({
-        where: { id: wallet.id },
-        data: { creditsBalance: { increment: 1 } },
+      emailData.push({
+        email: reservation.user.email,
+        firstName: reservation.user.clientProfile?.firstName || "Client",
       })
+    }
 
-      // Log the refund
-      await db.creditLedger.create({
-        data: {
-          userId: reservation.user.id,
-          delta: 1,
-          reason: "CANCEL_REFUND",
-          note: `Remboursement - Cours annulé: ${session.classType.title}`,
-        },
-      })
-
-      // Update reservation status
-      await db.reservation.update({
-        where: { id: reservation.id },
+    // Use a transaction to ensure all database operations succeed or fail together
+    await db.$transaction(async (tx) => {
+      // First, update session status to CANCELLED
+      await tx.session.update({
+        where: { id: sessionId },
         data: { status: "CANCELLED" },
       })
 
-      // Send email notification
-      const firstName = reservation.user.clientProfile?.firstName || "Client"
-      emailPromises.push(
-        sendClassCancellationEmail(
-          reservation.user.email,
-          firstName,
-          session.classType.title,
-          session.teacher.displayName,
-          session.startAt
-        )
-      )
+      // Then process each reservation
+      for (const reservation of session.reservations) {
+        // Update reservation status
+        await tx.reservation.update({
+          where: { id: reservation.id },
+          data: { status: "CANCELLED" },
+        })
+
+        // Create wallet if doesn't exist, then refund
+        let walletId = reservation.user.wallet?.id
+        
+        if (!walletId) {
+          const newWallet = await tx.wallet.create({
+            data: {
+              userId: reservation.user.id,
+              creditsBalance: 1, // Start with the refunded credit
+            },
+          })
+          walletId = newWallet.id
+        } else {
+          // Increment existing wallet
+          await tx.wallet.update({
+            where: { id: walletId },
+            data: { creditsBalance: { increment: 1 } },
+          })
+        }
+
+        // Log the refund
+        await tx.creditLedger.create({
+          data: {
+            userId: reservation.user.id,
+            delta: 1,
+            reason: "CANCEL_REFUND",
+            note: `Remboursement - Cours annulé: ${session.classType.title}`,
+          },
+        })
+      }
+    })
+
+    // Send emails AFTER transaction succeeds (outside transaction)
+    for (const data of emailData) {
+      sendClassCancellationEmail(
+        data.email,
+        data.firstName,
+        session.classType.title,
+        session.teacher.displayName,
+        session.startAt
+      ).catch((err) => {
+        console.error("Error sending cancellation email:", err)
+      })
     }
-
-    // Update session status
-    await db.session.update({
-      where: { id: sessionId },
-      data: { status: "CANCELLED" },
-    })
-
-    // Send all emails (don't wait for them to complete)
-    Promise.all(emailPromises).catch((err) => {
-      console.error("Error sending cancellation emails:", err)
-    })
 
     revalidatePath("/admin/planning")
     revalidatePath(`/admin/session/${sessionId}`)

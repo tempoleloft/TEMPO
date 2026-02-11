@@ -223,7 +223,9 @@ export async function cancelSession(sessionId: string) {
     }
   } catch (error) {
     console.error("Cancel session error:", error)
-    return { success: false, error: "Erreur lors de l'annulation du cours" }
+    // Return more details for debugging
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    return { success: false, error: `Erreur: ${errorMessage}` }
   }
 }
 

@@ -6,6 +6,7 @@ import { hash } from "bcryptjs"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { addMinutes } from "date-fns"
+import { sendClassCancellationEmail } from "@/lib/email"
 
 // ============================================================================
 // CREATE SESSION (COURS)
@@ -98,6 +99,113 @@ export async function createSession(data: CreateSessionInput) {
   } catch (error) {
     console.error("Create session error:", error)
     return { success: false, error: "Erreur lors de la création du cours" }
+  }
+}
+
+// ============================================================================
+// CANCEL SESSION
+// ============================================================================
+
+export async function cancelSession(sessionId: string) {
+  const authSession = await auth()
+  
+  if (!authSession?.user || authSession.user.role !== "ADMIN") {
+    return { success: false, error: "Non autorisé" }
+  }
+
+  try {
+    // Get session with reservations
+    const session = await db.session.findUnique({
+      where: { id: sessionId },
+      include: {
+        classType: true,
+        teacher: true,
+        reservations: {
+          where: { status: { in: ["BOOKED", "ATTENDED"] } },
+          include: {
+            user: {
+              include: {
+                clientProfile: true,
+                wallet: true,
+              },
+            },
+          },
+        },
+      },
+    })
+
+    if (!session) {
+      return { success: false, error: "Cours non trouvé" }
+    }
+
+    if (session.status === "CANCELLED") {
+      return { success: false, error: "Ce cours est déjà annulé" }
+    }
+
+    // Refund credits and send emails to all participants
+    const emailPromises: Promise<any>[] = []
+    
+    for (const reservation of session.reservations) {
+      // Refund credit
+      if (reservation.user.wallet) {
+        await db.wallet.update({
+          where: { id: reservation.user.wallet.id },
+          data: { creditsBalance: { increment: 1 } },
+        })
+
+        // Log the refund
+        await db.creditLedger.create({
+          data: {
+            userId: reservation.user.id,
+            delta: 1,
+            reason: "CANCEL_REFUND",
+            note: `Remboursement - Cours annulé: ${session.classType.title}`,
+          },
+        })
+      }
+
+      // Update reservation status
+      await db.reservation.update({
+        where: { id: reservation.id },
+        data: { status: "CANCELLED" },
+      })
+
+      // Send email notification
+      const firstName = reservation.user.clientProfile?.firstName || "Client"
+      emailPromises.push(
+        sendClassCancellationEmail(
+          reservation.user.email,
+          firstName,
+          session.classType.title,
+          session.teacher.displayName,
+          session.startAt
+        )
+      )
+    }
+
+    // Update session status
+    await db.session.update({
+      where: { id: sessionId },
+      data: { status: "CANCELLED" },
+    })
+
+    // Send all emails (don't wait for them to complete)
+    Promise.all(emailPromises).catch((err) => {
+      console.error("Error sending cancellation emails:", err)
+    })
+
+    revalidatePath("/admin/planning")
+    revalidatePath(`/admin/session/${sessionId}`)
+    revalidatePath("/planning")
+    revalidatePath("/teacher")
+    
+    return { 
+      success: true, 
+      refundedCount: session.reservations.length,
+    }
+  } catch (error) {
+    console.error("Cancel session error:", error)
+    return { success: false, error: "Erreur lors de l'annulation du cours" }
   }
 }
 

@@ -10,6 +10,7 @@ import { fr } from "date-fns/locale"
 import { Clock, MapPin, User, Users, ArrowLeft, Check, X, ClipboardList, Phone } from "lucide-react"
 import Link from "next/link"
 import { AttendanceButtons } from "@/components/admin/attendance-buttons"
+import { CancelSessionButton } from "@/components/admin/cancel-session-button"
 
 interface PageProps {
   params: { id: string }
@@ -51,20 +52,34 @@ export default async function AdminSessionPage({ params }: PageProps) {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button asChild variant="ghost" size="icon">
-          <Link href="/admin/planning">
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold text-tempo-bordeaux">
-            {session.classType.title}
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            {format(session.startAt, "EEEE d MMMM yyyy à HH:mm", { locale: fr })}
-          </p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button asChild variant="ghost" size="icon">
+            <Link href="/admin/planning">
+              <ArrowLeft className="h-5 w-5" />
+            </Link>
+          </Button>
+          <div>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-bold text-tempo-bordeaux">
+                {session.classType.title}
+              </h1>
+              {session.status === "CANCELLED" && (
+                <Badge variant="destructive">Annulé</Badge>
+              )}
+            </div>
+            <p className="text-muted-foreground mt-1">
+              {format(session.startAt, "EEEE d MMMM yyyy à HH:mm", { locale: fr })}
+            </p>
+          </div>
         </div>
+        
+        <CancelSessionButton
+          sessionId={session.id}
+          sessionTitle={session.classType.title}
+          participantsCount={totalParticipants}
+          isCancelled={session.status === "CANCELLED"}
+        />
       </div>
 
       {/* Session Info */}

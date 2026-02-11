@@ -258,6 +258,146 @@ export async function sendWaitlistNotification(
   }
 }
 
+export async function sendClassCancellationEmail(
+  email: string,
+  firstName: string,
+  className: string,
+  teacherName: string,
+  classDate: Date
+) {
+  const formattedDate = classDate.toLocaleDateString("fr-FR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  })
+  const formattedTime = classDate.toLocaleTimeString("fr-FR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  })
+
+  try {
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to: email,
+      subject: `⚠️ Cours annulé – ${className} du ${formattedDate}`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          </head>
+          <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #F2F1ED;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #F2F1ED; padding: 40px 20px;">
+              <tr>
+                <td align="center">
+                  <table width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    
+                    <!-- Header bordeaux -->
+                    <tr>
+                      <td style="background-color: #42101B; padding: 40px 40px 30px 40px; text-align: center;">
+                        <h1 style="margin: 0; font-size: 36px; font-weight: bold; color: #F2F1ED; letter-spacing: 2px;">TEMPO</h1>
+                        <p style="margin: 8px 0 0 0; font-size: 14px; color: #D4A574; letter-spacing: 1px;">LE LOFT • YOGA & PILATES</p>
+                      </td>
+                    </tr>
+                    
+                    <!-- Contenu principal -->
+                    <tr>
+                      <td style="padding: 50px 40px;">
+                        <h2 style="margin: 0 0 20px 0; font-size: 24px; color: #42101B; font-weight: 600;">
+                          Cours annulé
+                        </h2>
+                        
+                        <p style="margin: 0 0 25px 0; font-size: 16px; color: #555; line-height: 1.6;">
+                          Bonjour ${firstName},
+                        </p>
+                        
+                        <p style="margin: 0 0 25px 0; font-size: 16px; color: #555; line-height: 1.6;">
+                          Nous sommes sincèrement désolés de vous informer que le cours suivant a dû être annulé :
+                        </p>
+                        
+                        <!-- Détails du cours -->
+                        <div style="background-color: #FEE2E2; border-radius: 12px; padding: 25px; margin-bottom: 25px; border-left: 4px solid #DC2626;">
+                          <table cellpadding="0" cellspacing="0" width="100%">
+                            <tr>
+                              <td style="padding: 8px 0;">
+                                <span style="color: #666; font-size: 14px;">Cours :</span><br>
+                                <span style="color: #42101B; font-size: 18px; font-weight: 600;">${className}</span>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td style="padding: 8px 0;">
+                                <span style="color: #666; font-size: 14px;">Professeur :</span><br>
+                                <span style="color: #42101B; font-size: 16px; font-weight: 500;">${teacherName}</span>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td style="padding: 8px 0;">
+                                <span style="color: #666; font-size: 14px;">Date :</span><br>
+                                <span style="color: #42101B; font-size: 16px; font-weight: 500;">${formattedDate} à ${formattedTime}</span>
+                              </td>
+                            </tr>
+                          </table>
+                        </div>
+                        
+                        <!-- Remboursement -->
+                        <div style="background-color: #D1FAE5; border-radius: 12px; padding: 20px; margin-bottom: 25px; border-left: 4px solid #10B981;">
+                          <p style="margin: 0; font-size: 15px; color: #065F46;">
+                            <strong>✓ Bonne nouvelle :</strong> Votre crédit a été automatiquement recrédité sur votre compte.
+                          </p>
+                        </div>
+                        
+                        <p style="margin: 0 0 25px 0; font-size: 16px; color: #555; line-height: 1.6;">
+                          Toute l'équipe de Tempo vous présente ses excuses pour ce désagrément. 
+                          N'hésitez pas à réserver un autre cours sur notre planning.
+                        </p>
+                        
+                        <!-- Bouton CTA -->
+                        <table width="100%" cellpadding="0" cellspacing="0">
+                          <tr>
+                            <td align="center" style="padding: 10px 0 20px 0;">
+                              <a href="${BASE_URL}/planning" style="display: inline-block; padding: 18px 50px; background-color: #42101B; color: #F2F1ED; text-decoration: none; border-radius: 50px; font-weight: 600; font-size: 16px; letter-spacing: 0.5px;">
+                                Voir le planning
+                              </a>
+                            </td>
+                          </tr>
+                        </table>
+                        
+                        <p style="margin: 0; font-size: 14px; color: #666; line-height: 1.6; text-align: center;">
+                          Merci pour votre compréhension.<br>
+                          À très bientôt au studio ! 🙏
+                        </p>
+                      </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                      <td style="background-color: #F9F8F6; padding: 30px 40px; text-align: center; border-top: 1px solid #eee;">
+                        <p style="margin: 0 0 10px 0; font-size: 14px; font-weight: 600; color: #42101B;">Tempo – Le Loft</p>
+                        <p style="margin: 0 0 5px 0; font-size: 13px; color: #888;">41 Rue du Temple, 75004 Paris</p>
+                        <p style="margin: 0; font-size: 13px; color: #888;">
+                          <a href="mailto:contact@tempoleloft.com" style="color: #42101B; text-decoration: none;">contact@tempoleloft.com</a>
+                        </p>
+                      </td>
+                    </tr>
+                    
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </body>
+        </html>
+      `,
+    })
+    
+    return { success: true }
+  } catch (error) {
+    console.error("Class cancellation email error:", error)
+    return { success: false, error: "Erreur lors de l'envoi de l'email" }
+  }
+}
+
 export async function sendPasswordResetEmail(email: string, token: string) {
   const resetUrl = `${BASE_URL}/reset-password?token=${token}`
 

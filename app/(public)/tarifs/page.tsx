@@ -1,4 +1,5 @@
 import { db } from "@/lib/db"
+import { auth } from "@/lib/auth"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 
 export const dynamic = 'force-dynamic'
@@ -8,6 +9,9 @@ import Link from "next/link"
 import { Check } from "lucide-react"
 
 export default async function TarifsPage() {
+  const session = await auth()
+  const isLoggedIn = !!session?.user
+  
   const products = await db.product.findMany({
     where: { active: true },
     orderBy: { sortOrder: "asc" },
@@ -95,7 +99,7 @@ export default async function TarifsPage() {
                       className={`w-full ${isPopular ? "bg-tempo-bordeaux hover:bg-tempo-noir" : ""}`}
                       variant={isPopular ? "default" : "outline"}
                     >
-                      <Link href="/register">Acheter</Link>
+                      <Link href={isLoggedIn ? "/app/paiements" : "/register"}>Acheter</Link>
                     </Button>
                   </CardFooter>
                 </Card>
@@ -159,15 +163,36 @@ export default async function TarifsPage() {
       {/* CTA */}
       <section className="py-12 sm:py-20 px-4 sm:px-6 bg-tempo-bordeaux text-tempo-creme">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">
-            Prêt à commencer ?
-          </h2>
-          <p className="text-base sm:text-xl opacity-80 mb-6 sm:mb-8">
-            Créez votre compte et réservez votre premier cours dès aujourd'hui.
-          </p>
-          <Button asChild size="lg" className="bg-tempo-creme text-tempo-bordeaux hover:bg-tempo-taupe w-full sm:w-auto">
-            <Link href="/register">Créer mon compte</Link>
-          </Button>
+          {isLoggedIn ? (
+            <>
+              <h2 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">
+                Prêt à pratiquer ?
+              </h2>
+              <p className="text-base sm:text-xl opacity-80 mb-6 sm:mb-8">
+                Achetez vos crédits et réservez votre prochain cours.
+              </p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
+                <Button asChild size="lg" className="bg-tempo-creme text-tempo-bordeaux hover:bg-tempo-taupe w-full sm:w-auto">
+                  <Link href="/app/paiements">Acheter des crédits</Link>
+                </Button>
+                <Button asChild size="lg" className="bg-transparent border-2 border-tempo-creme text-tempo-creme hover:bg-tempo-creme hover:text-tempo-bordeaux w-full sm:w-auto">
+                  <Link href="/app/planning">Voir le planning</Link>
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <h2 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">
+                Prêt à commencer ?
+              </h2>
+              <p className="text-base sm:text-xl opacity-80 mb-6 sm:mb-8">
+                Créez votre compte et réservez votre premier cours dès aujourd'hui.
+              </p>
+              <Button asChild size="lg" className="bg-tempo-creme text-tempo-bordeaux hover:bg-tempo-taupe w-full sm:w-auto">
+                <Link href="/register">Créer mon compte</Link>
+              </Button>
+            </>
+          )}
         </div>
       </section>
     </div>

@@ -114,7 +114,7 @@ export default async function AdminProfsPage() {
                 )}
               </CardContent>
             </Link>
-            <div className="px-6 pb-4 flex justify-end" onClick={(e) => e.stopPropagation()}>
+            <div className="px-6 pb-4 flex justify-end">
               <TeacherActions 
                 teacherId={teacher.id}
                 teacherName={teacher.displayName}
@@ -174,7 +174,7 @@ export default async function AdminProfsPage() {
                     </div>
                   </CardHeader>
                 </Link>
-                <div className="px-6 pb-4 flex justify-end" onClick={(e) => e.stopPropagation()}>
+                <div className="px-6 pb-4 flex justify-end">
                   <TeacherActions 
                     teacherId={teacher.id}
                     teacherName={teacher.displayName}

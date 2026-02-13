@@ -1,4 +1,5 @@
 import { db } from "@/lib/db"
+import { auth } from "@/lib/auth"
 import { format, startOfWeek, endOfWeek, addWeeks, eachDayOfInterval } from "date-fns"
 
 export const dynamic = 'force-dynamic'
@@ -13,6 +14,9 @@ interface PageProps {
 }
 
 export default async function PublicPlanningPage({ searchParams }: PageProps) {
+  const session = await auth()
+  const isLoggedIn = !!session?.user
+  
   const weekOffset = parseInt(searchParams.week || "0")
   const now = new Date()
   const weekStart = startOfWeek(addWeeks(now, weekOffset), { weekStartsOn: 1 })
@@ -182,18 +186,37 @@ export default async function PublicPlanningPage({ searchParams }: PageProps) {
 
         {/* CTA */}
         <div className="mt-8 sm:mt-12 text-center bg-tempo-bordeaux text-tempo-creme rounded-lg p-6 sm:p-8">
-          <h3 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4">Prêt à commencer ?</h3>
-          <p className="opacity-80 mb-4 sm:mb-6 text-sm sm:text-base">
-            Créez votre compte pour réserver vos cours et profiter de nos offres.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
-            <Button asChild className="bg-tempo-creme text-tempo-bordeaux hover:bg-tempo-taupe w-full sm:w-auto">
-              <Link href="/register">Créer un compte</Link>
-            </Button>
-            <Button asChild className="bg-transparent border-2 border-tempo-creme text-tempo-creme hover:bg-tempo-creme hover:text-tempo-bordeaux w-full sm:w-auto">
-              <Link href="/tarifs">Voir les tarifs</Link>
-            </Button>
-          </div>
+          {isLoggedIn ? (
+            <>
+              <h3 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4">Réservez votre cours</h3>
+              <p className="opacity-80 mb-4 sm:mb-6 text-sm sm:text-base">
+                Accédez à votre espace pour réserver directement vos cours.
+              </p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
+                <Button asChild className="bg-tempo-creme text-tempo-bordeaux hover:bg-tempo-taupe w-full sm:w-auto">
+                  <Link href="/app/planning">Mon planning</Link>
+                </Button>
+                <Button asChild className="bg-transparent border-2 border-tempo-creme text-tempo-creme hover:bg-tempo-creme hover:text-tempo-bordeaux w-full sm:w-auto">
+                  <Link href="/app/reservations">Mes réservations</Link>
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <h3 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4">Prêt à commencer ?</h3>
+              <p className="opacity-80 mb-4 sm:mb-6 text-sm sm:text-base">
+                Créez votre compte pour réserver vos cours et profiter de nos offres.
+              </p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
+                <Button asChild className="bg-tempo-creme text-tempo-bordeaux hover:bg-tempo-taupe w-full sm:w-auto">
+                  <Link href="/register">Créer un compte</Link>
+                </Button>
+                <Button asChild className="bg-transparent border-2 border-tempo-creme text-tempo-creme hover:bg-tempo-creme hover:text-tempo-bordeaux w-full sm:w-auto">
+                  <Link href="/tarifs">Voir les tarifs</Link>
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

@@ -190,7 +190,7 @@ export default async function PublicPlanningPage({ searchParams }: PageProps) {
             <Button asChild className="bg-tempo-creme text-tempo-bordeaux hover:bg-tempo-taupe w-full sm:w-auto">
               <Link href="/register">Créer un compte</Link>
             </Button>
-            <Button asChild variant="outline" className="border-tempo-creme/30 text-tempo-creme hover:bg-tempo-creme/10 w-full sm:w-auto">
+            <Button asChild className="bg-transparent border-2 border-tempo-creme text-tempo-creme hover:bg-tempo-creme hover:text-tempo-bordeaux w-full sm:w-auto">
               <Link href="/tarifs">Voir les tarifs</Link>
             </Button>
           </div>

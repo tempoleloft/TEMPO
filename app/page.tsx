@@ -2,8 +2,22 @@ import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { MobileNav } from "@/components/layout/mobile-nav"
+import { auth } from "@/lib/auth"
+import { User } from "lucide-react"
 
-export default function Home() {
+export default async function Home() {
+  const session = await auth()
+  const isLoggedIn = !!session?.user
+  const userName = session?.user?.name || session?.user?.email?.split("@")[0]
+  const userRole = session?.user?.role
+  
+  // Determine dashboard link based on role
+  const dashboardLink = userRole === "ADMIN" 
+    ? "/admin" 
+    : userRole === "TEACHER" 
+    ? "/teacher" 
+    : "/app"
+
   return (
     <main className="min-h-screen bg-tempo-bordeaux text-tempo-creme">
       {/* Navigation */}
@@ -37,18 +51,38 @@ export default function Home() {
             </Link>
           </div>
           <div className="hidden md:flex items-center gap-4">
-            <Link href="/login" className="text-sm hover:opacity-70 transition-opacity">
-              Connexion
-            </Link>
-            <Button 
-              asChild
-              className="bg-tempo-creme text-tempo-bordeaux hover:bg-tempo-taupe"
-            >
-              <Link href="/register">Rejoindre</Link>
-            </Button>
+            {isLoggedIn ? (
+              <>
+                <Link 
+                  href={dashboardLink} 
+                  className="flex items-center gap-2 text-sm hover:opacity-70 transition-opacity"
+                >
+                  <User className="h-4 w-4" />
+                  <span>{userName}</span>
+                </Link>
+                <Button 
+                  asChild
+                  className="bg-tempo-creme text-tempo-bordeaux hover:bg-tempo-taupe"
+                >
+                  <Link href={dashboardLink}>Mon espace</Link>
+                </Button>
+              </>
+            ) : (
+              <>
+                <Link href="/login" className="text-sm hover:opacity-70 transition-opacity">
+                  Connexion
+                </Link>
+                <Button 
+                  asChild
+                  className="bg-tempo-creme text-tempo-bordeaux hover:bg-tempo-taupe"
+                >
+                  <Link href="/register">Rejoindre</Link>
+                </Button>
+              </>
+            )}
           </div>
           {/* Mobile Menu */}
-          <MobileNav isLoggedIn={false} />
+          <MobileNav isLoggedIn={isLoggedIn} dashboardLink={dashboardLink} userName={userName} />
         </div>
       </nav>
 

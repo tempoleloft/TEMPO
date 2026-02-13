@@ -4,8 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 export const dynamic = 'force-dynamic'
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { format, startOfMonth, endOfMonth } from "date-fns"
-import { fr } from "date-fns/locale"
+import { startOfMonth, endOfMonth } from "date-fns"
 import { User, Calendar, Plus, EyeOff } from "lucide-react"
 import Link from "next/link"
 import { TeacherActions } from "@/components/admin/teacher-actions"
@@ -18,7 +17,6 @@ export default async function AdminProfsPage() {
   const teachers = await db.teacherProfile.findMany({
     include: {
       user: true,
-      sessions: true, // All sessions to count total
       _count: {
         select: {
           sessions: true,
@@ -26,7 +24,7 @@ export default async function AdminProfsPage() {
       },
     },
     orderBy: [
-      { isActive: "desc" }, // Active first
+      { isActive: "desc" },
       { displayName: "asc" },
     ],
   })
@@ -72,59 +70,58 @@ export default async function AdminProfsPage() {
       {/* Active Teachers Grid */}
       <div className="grid md:grid-cols-2 gap-6">
         {activeTeachers.map((teacher) => (
-          <Card key={teacher.id}>
-            <CardHeader>
-              <div className="flex items-start gap-4">
-                <div className="w-16 h-16 rounded-full bg-tempo-taupe/30 flex items-center justify-center">
-                  {teacher.photoUrl ? (
-                    <img
-                      src={teacher.photoUrl}
-                      alt={teacher.displayName}
-                      className="w-full h-full rounded-full object-cover"
-                    />
-                  ) : (
-                    <User className="h-8 w-8 text-tempo-bordeaux/50" />
-                  )}
-                </div>
-                <div className="flex-1">
-                  <CardTitle className="flex items-center justify-between">
-                    <span>{teacher.displayName}</span>
-                    <TeacherActions 
-                      teacherId={teacher.id}
-                      teacherName={teacher.displayName}
-                      isActive={teacher.isActive}
-                      sessionsCount={teacher._count.sessions}
-                    />
-                  </CardTitle>
-                  <CardDescription className="mt-1">
-                    {teacher.user.email}
-                  </CardDescription>
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    {teacher.specialties.map((specialty) => (
-                      <Badge key={specialty} variant="secondary" className="text-xs">
-                        {specialty}
-                      </Badge>
-                    ))}
+          <Card key={teacher.id} className="hover:shadow-md transition-shadow">
+            <Link href={`/admin/profs/${teacher.id}`} className="block">
+              <CardHeader>
+                <div className="flex items-start gap-4">
+                  <div className="w-16 h-16 rounded-full bg-tempo-taupe/30 flex items-center justify-center shrink-0">
+                    {teacher.photoUrl ? (
+                      <img
+                        src={teacher.photoUrl}
+                        alt={teacher.displayName}
+                        className="w-full h-full rounded-full object-cover"
+                      />
+                    ) : (
+                      <User className="h-8 w-8 text-tempo-bordeaux/50" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <CardTitle className="text-tempo-bordeaux hover:underline">
+                      {teacher.displayName}
+                    </CardTitle>
+                    <CardDescription className="mt-1 truncate">
+                      {teacher.user.email}
+                    </CardDescription>
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {teacher.specialties.map((specialty) => (
+                        <Badge key={specialty} variant="secondary" className="text-xs">
+                          {specialty}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2 text-muted-foreground">
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Calendar className="h-4 w-4" />
-                  <span>
-                    {teacher.monthSessions} cours ce mois
-                  </span>
+                  <span>{teacher.monthSessions} cours ce mois</span>
                 </div>
-              </div>
-              
-              {teacher.bio && (
-                <p className="text-sm text-muted-foreground mt-4 line-clamp-2">
-                  {teacher.bio}
-                </p>
-              )}
-            </CardContent>
+                {teacher.bio && (
+                  <p className="text-sm text-muted-foreground mt-3 line-clamp-2">
+                    {teacher.bio}
+                  </p>
+                )}
+              </CardContent>
+            </Link>
+            <div className="px-6 pb-4 flex justify-end" onClick={(e) => e.stopPropagation()}>
+              <TeacherActions 
+                teacherId={teacher.id}
+                teacherName={teacher.displayName}
+                isActive={teacher.isActive}
+                sessionsCount={teacher._count.sessions}
+              />
+            </div>
           </Card>
         ))}
       </div>
@@ -145,42 +142,46 @@ export default async function AdminProfsPage() {
           </h2>
           <div className="grid md:grid-cols-2 gap-6">
             {hiddenTeachers.map((teacher) => (
-              <Card key={teacher.id} className="opacity-60 border-dashed">
-                <CardHeader>
-                  <div className="flex items-start gap-4">
-                    <div className="w-16 h-16 rounded-full bg-tempo-taupe/20 flex items-center justify-center relative">
-                      {teacher.photoUrl ? (
-                        <img
-                          src={teacher.photoUrl}
-                          alt={teacher.displayName}
-                          className="w-full h-full rounded-full object-cover grayscale"
-                        />
-                      ) : (
-                        <User className="h-8 w-8 text-tempo-noir/30" />
-                      )}
-                      <div className="absolute inset-0 flex items-center justify-center bg-white/50 rounded-full">
-                        <EyeOff className="h-6 w-6 text-tempo-noir/40" />
+              <Card key={teacher.id} className="opacity-60 border-dashed hover:opacity-80 transition-opacity">
+                <Link href={`/admin/profs/${teacher.id}`} className="block">
+                  <CardHeader>
+                    <div className="flex items-start gap-4">
+                      <div className="w-16 h-16 rounded-full bg-tempo-taupe/20 flex items-center justify-center relative shrink-0">
+                        {teacher.photoUrl ? (
+                          <img
+                            src={teacher.photoUrl}
+                            alt={teacher.displayName}
+                            className="w-full h-full rounded-full object-cover grayscale"
+                          />
+                        ) : (
+                          <User className="h-8 w-8 text-tempo-noir/30" />
+                        )}
+                        <div className="absolute inset-0 flex items-center justify-center bg-white/50 rounded-full">
+                          <EyeOff className="h-6 w-6 text-tempo-noir/40" />
+                        </div>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <CardTitle className="text-tempo-noir/60 hover:underline">
+                          {teacher.displayName}
+                        </CardTitle>
+                        <CardDescription className="mt-1 truncate">
+                          {teacher.user.email}
+                        </CardDescription>
+                        <Badge variant="outline" className="mt-2 text-xs">
+                          Masqué
+                        </Badge>
                       </div>
                     </div>
-                    <div className="flex-1">
-                      <CardTitle className="flex items-center justify-between text-tempo-noir/60">
-                        <span>{teacher.displayName}</span>
-                        <TeacherActions 
-                          teacherId={teacher.id}
-                          teacherName={teacher.displayName}
-                          isActive={teacher.isActive}
-                          sessionsCount={teacher._count.sessions}
-                        />
-                      </CardTitle>
-                      <CardDescription className="mt-1">
-                        {teacher.user.email}
-                      </CardDescription>
-                      <Badge variant="outline" className="mt-2 text-xs">
-                        Masqué
-                      </Badge>
-                    </div>
-                  </div>
-                </CardHeader>
+                  </CardHeader>
+                </Link>
+                <div className="px-6 pb-4 flex justify-end" onClick={(e) => e.stopPropagation()}>
+                  <TeacherActions 
+                    teacherId={teacher.id}
+                    teacherName={teacher.displayName}
+                    isActive={teacher.isActive}
+                    sessionsCount={teacher._count.sessions}
+                  />
+                </div>
               </Card>
             ))}
           </div>

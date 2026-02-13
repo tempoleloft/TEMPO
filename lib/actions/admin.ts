@@ -1320,3 +1320,68 @@ export async function forceDeleteTeacher(teacherId: string) {
     return { success: false, error: "Erreur lors de la suppression" }
   }
 }
+
+export async function getTeacherById(teacherId: string) {
+  const authSession = await auth()
+  
+  if (!authSession?.user || authSession.user.role !== "ADMIN") {
+    return { success: false, error: "Non autorisé" }
+  }
+
+  try {
+    const teacher = await db.teacherProfile.findUnique({
+      where: { id: teacherId },
+      include: {
+        user: {
+          select: { email: true },
+        },
+        _count: {
+          select: { sessions: true },
+        },
+      },
+    })
+
+    if (!teacher) {
+      return { success: false, error: "Professeur non trouvé" }
+    }
+
+    return { success: true, teacher }
+  } catch (error) {
+    console.error("Get teacher by id error:", error)
+    return { success: false, error: "Erreur lors du chargement" }
+  }
+}
+
+export async function updateTeacher(teacherId: string, data: {
+  displayName?: string
+  bio?: string | null
+  photoUrl?: string | null
+  specialties?: string[]
+}) {
+  const authSession = await auth()
+  
+  if (!authSession?.user || authSession.user.role !== "ADMIN") {
+    return { success: false, error: "Non autorisé" }
+  }
+
+  try {
+    const teacher = await db.teacherProfile.update({
+      where: { id: teacherId },
+      data: {
+        displayName: data.displayName,
+        bio: data.bio,
+        photoUrl: data.photoUrl,
+        specialties: data.specialties,
+      },
+    })
+
+    revalidatePath("/admin/profs")
+    revalidatePath(`/admin/profs/${teacherId}`)
+    revalidatePath("/profs")
+    
+    return { success: true, teacher }
+  } catch (error) {
+    console.error("Update teacher error:", error)
+    return { success: false, error: "Erreur lors de la mise à jour" }
+  }
+}

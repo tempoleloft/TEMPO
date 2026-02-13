@@ -8,6 +8,7 @@ import Link from "next/link"
 
 export default async function ProfsPage() {
   const teachers = await db.teacherProfile.findMany({
+    where: { isActive: true },
     include: {
       user: true,
     },

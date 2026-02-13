@@ -113,11 +113,14 @@ model TeacherProfile {
   bio         String?
   photoUrl    String?
   specialties String[] // ["Yoga", "Pilates", "Barre au Sol"]
+  isActive    Boolean  @default(true)  // Masquer/afficher le professeur
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   sessions Session[]
+
+  @@index([isActive])
 }
 
 // ============================================================================

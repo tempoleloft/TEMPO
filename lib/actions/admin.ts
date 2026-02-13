@@ -1166,3 +1166,157 @@ export async function toggleCafeMenuItemActive(id: string) {
     return { success: false, error: "Erreur lors de la modification" }
   }
 }
+
+// ============================================================================
+// TEACHER MANAGEMENT
+// ============================================================================
+
+export async function toggleTeacherActive(teacherId: string) {
+  const authSession = await auth()
+  
+  if (!authSession?.user || authSession.user.role !== "ADMIN") {
+    return { success: false, error: "Non autorisé" }
+  }
+
+  try {
+    const teacher = await db.teacherProfile.findUnique({
+      where: { id: teacherId },
+      select: { isActive: true },
+    })
+
+    if (!teacher) {
+      return { success: false, error: "Professeur non trouvé" }
+    }
+
+    await db.teacherProfile.update({
+      where: { id: teacherId },
+      data: { isActive: !teacher.isActive },
+    })
+
+    revalidatePath("/admin/profs")
+    revalidatePath("/profs")
+    revalidatePath("/planning")
+    revalidatePath("/admin/planning")
+    
+    return { success: true }
+  } catch (error) {
+    console.error("Toggle teacher active error:", error)
+    return { success: false, error: "Erreur lors de la modification" }
+  }
+}
+
+export async function deleteTeacher(teacherId: string) {
+  const authSession = await auth()
+  
+  if (!authSession?.user || authSession.user.role !== "ADMIN") {
+    return { success: false, error: "Non autorisé" }
+  }
+
+  try {
+    // Check if teacher has any sessions
+    const sessionsCount = await db.session.count({
+      where: { teacherId },
+    })
+
+    if (sessionsCount > 0) {
+      return { 
+        success: false, 
+        error: `Ce professeur a ${sessionsCount} cours associé(s). Supprimez ou réassignez ces cours d'abord, ou masquez le professeur.`,
+        hasSession: true,
+        sessionsCount,
+      }
+    }
+
+    // Get teacher to find userId
+    const teacher = await db.teacherProfile.findUnique({
+      where: { id: teacherId },
+      select: { userId: true },
+    })
+
+    if (!teacher) {
+      return { success: false, error: "Professeur non trouvé" }
+    }
+
+    // Delete teacher profile (cascade will handle user if configured)
+    await db.teacherProfile.delete({
+      where: { id: teacherId },
+    })
+
+    // Also update user role back to CLIENT
+    await db.user.update({
+      where: { id: teacher.userId },
+      data: { role: "CLIENT" },
+    })
+
+    revalidatePath("/admin/profs")
+    revalidatePath("/profs")
+    
+    return { success: true }
+  } catch (error) {
+    console.error("Delete teacher error:", error)
+    return { success: false, error: "Erreur lors de la suppression" }
+  }
+}
+
+export async function forceDeleteTeacher(teacherId: string) {
+  const authSession = await auth()
+  
+  if (!authSession?.user || authSession.user.role !== "ADMIN") {
+    return { success: false, error: "Non autorisé" }
+  }
+
+  try {
+    // Get teacher to find userId
+    const teacher = await db.teacherProfile.findUnique({
+      where: { id: teacherId },
+      select: { userId: true },
+    })
+
+    if (!teacher) {
+      return { success: false, error: "Professeur non trouvé" }
+    }
+
+    // Delete all related data in transaction
+    await db.$transaction(async (tx) => {
+      // Delete waitlist entries for teacher's sessions
+      await tx.waitlistEntry.deleteMany({
+        where: {
+          session: { teacherId },
+        },
+      })
+
+      // Delete reservations for teacher's sessions
+      await tx.reservation.deleteMany({
+        where: {
+          session: { teacherId },
+        },
+      })
+
+      // Delete all sessions
+      await tx.session.deleteMany({
+        where: { teacherId },
+      })
+
+      // Delete teacher profile
+      await tx.teacherProfile.delete({
+        where: { id: teacherId },
+      })
+
+      // Update user role back to CLIENT
+      await tx.user.update({
+        where: { id: teacher.userId },
+        data: { role: "CLIENT" },
+      })
+    })
+
+    revalidatePath("/admin/profs")
+    revalidatePath("/profs")
+    revalidatePath("/admin/planning")
+    revalidatePath("/planning")
+    
+    return { success: true }
+  } catch (error) {
+    console.error("Force delete teacher error:", error)
+    return { success: false, error: "Erreur lors de la suppression" }
+  }
+}

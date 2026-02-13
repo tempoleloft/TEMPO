@@ -6,8 +6,9 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { format, startOfMonth, endOfMonth } from "date-fns"
 import { fr } from "date-fns/locale"
-import { User, Calendar, Plus } from "lucide-react"
+import { User, Calendar, Plus, EyeOff } from "lucide-react"
 import Link from "next/link"
+import { TeacherActions } from "@/components/admin/teacher-actions"
 
 export default async function AdminProfsPage() {
   const now = new Date()
@@ -17,15 +18,35 @@ export default async function AdminProfsPage() {
   const teachers = await db.teacherProfile.findMany({
     include: {
       user: true,
-      sessions: {
-        where: {
-          startAt: { gte: monthStart, lte: monthEnd },
-          status: "SCHEDULED",
+      sessions: true, // All sessions to count total
+      _count: {
+        select: {
+          sessions: true,
         },
       },
     },
-    orderBy: { displayName: "asc" },
+    orderBy: [
+      { isActive: "desc" }, // Active first
+      { displayName: "asc" },
+    ],
   })
+
+  // Count sessions this month separately
+  const teachersWithMonthCount = await Promise.all(
+    teachers.map(async (teacher) => {
+      const monthSessions = await db.session.count({
+        where: {
+          teacherId: teacher.id,
+          startAt: { gte: monthStart, lte: monthEnd },
+          status: "SCHEDULED",
+        },
+      })
+      return { ...teacher, monthSessions }
+    })
+  )
+  
+  const activeTeachers = teachersWithMonthCount.filter(t => t.isActive)
+  const hiddenTeachers = teachersWithMonthCount.filter(t => !t.isActive)
 
   return (
     <div className="space-y-8">
@@ -34,7 +55,10 @@ export default async function AdminProfsPage() {
         <div>
           <h1 className="text-3xl font-bold text-tempo-bordeaux">Professeurs</h1>
           <p className="text-muted-foreground mt-1">
-            {teachers.length} professeur{teachers.length > 1 ? "s" : ""} actif{teachers.length > 1 ? "s" : ""}
+            {activeTeachers.length} professeur{activeTeachers.length > 1 ? "s" : ""} actif{activeTeachers.length > 1 ? "s" : ""}
+            {hiddenTeachers.length > 0 && (
+              <span className="text-tempo-noir/40"> • {hiddenTeachers.length} masqué{hiddenTeachers.length > 1 ? "s" : ""}</span>
+            )}
           </p>
         </div>
         <Button asChild className="bg-tempo-bordeaux hover:bg-tempo-noir">
@@ -45,9 +69,9 @@ export default async function AdminProfsPage() {
         </Button>
       </div>
 
-      {/* Teachers Grid */}
+      {/* Active Teachers Grid */}
       <div className="grid md:grid-cols-2 gap-6">
-        {teachers.map((teacher) => (
+        {activeTeachers.map((teacher) => (
           <Card key={teacher.id}>
             <CardHeader>
               <div className="flex items-start gap-4">
@@ -63,7 +87,15 @@ export default async function AdminProfsPage() {
                   )}
                 </div>
                 <div className="flex-1">
-                  <CardTitle>{teacher.displayName}</CardTitle>
+                  <CardTitle className="flex items-center justify-between">
+                    <span>{teacher.displayName}</span>
+                    <TeacherActions 
+                      teacherId={teacher.id}
+                      teacherName={teacher.displayName}
+                      isActive={teacher.isActive}
+                      sessionsCount={teacher._count.sessions}
+                    />
+                  </CardTitle>
                   <CardDescription className="mt-1">
                     {teacher.user.email}
                   </CardDescription>
@@ -82,7 +114,7 @@ export default async function AdminProfsPage() {
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Calendar className="h-4 w-4" />
                   <span>
-                    {teacher.sessions.length} cours ce mois
+                    {teacher.monthSessions} cours ce mois
                   </span>
                 </div>
               </div>
@@ -97,10 +129,61 @@ export default async function AdminProfsPage() {
         ))}
       </div>
 
-      {teachers.length === 0 && (
+      {activeTeachers.length === 0 && hiddenTeachers.length === 0 && (
         <div className="text-center py-12 text-muted-foreground">
           <User className="h-12 w-12 mx-auto mb-4 opacity-50" />
           <p>Aucun professeur enregistré</p>
+        </div>
+      )}
+
+      {/* Hidden Teachers Section */}
+      {hiddenTeachers.length > 0 && (
+        <div className="mt-12">
+          <h2 className="text-xl font-semibold text-tempo-noir/50 mb-4 flex items-center gap-2">
+            <EyeOff className="h-5 w-5" />
+            Professeurs masqués
+          </h2>
+          <div className="grid md:grid-cols-2 gap-6">
+            {hiddenTeachers.map((teacher) => (
+              <Card key={teacher.id} className="opacity-60 border-dashed">
+                <CardHeader>
+                  <div className="flex items-start gap-4">
+                    <div className="w-16 h-16 rounded-full bg-tempo-taupe/20 flex items-center justify-center relative">
+                      {teacher.photoUrl ? (
+                        <img
+                          src={teacher.photoUrl}
+                          alt={teacher.displayName}
+                          className="w-full h-full rounded-full object-cover grayscale"
+                        />
+                      ) : (
+                        <User className="h-8 w-8 text-tempo-noir/30" />
+                      )}
+                      <div className="absolute inset-0 flex items-center justify-center bg-white/50 rounded-full">
+                        <EyeOff className="h-6 w-6 text-tempo-noir/40" />
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <CardTitle className="flex items-center justify-between text-tempo-noir/60">
+                        <span>{teacher.displayName}</span>
+                        <TeacherActions 
+                          teacherId={teacher.id}
+                          teacherName={teacher.displayName}
+                          isActive={teacher.isActive}
+                          sessionsCount={teacher._count.sessions}
+                        />
+                      </CardTitle>
+                      <CardDescription className="mt-1">
+                        {teacher.user.email}
+                      </CardDescription>
+                      <Badge variant="outline" className="mt-2 text-xs">
+                        Masqué
+                      </Badge>
+                    </div>
+                  </div>
+                </CardHeader>
+              </Card>
+            ))}
+          </div>
         </div>
       )}
     </div>

@@ -12,6 +12,7 @@ export async function GET() {
   }
 
   const teachers = await db.teacherProfile.findMany({
+    where: { isActive: true },
     select: {
       id: true,
       displayName: true,

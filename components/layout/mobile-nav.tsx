@@ -17,10 +17,10 @@ interface MobileNavProps {
 
 const publicLinks = [
   { href: "/studio", label: "Studio", icon: Home },
-  { href: "/cafe", label: "Le Café", icon: Coffee },
   { href: "/profs", label: "Professeurs", icon: Users },
   { href: "/planning", label: "Planning", icon: Calendar },
   { href: "/tarifs", label: "Tarifs", icon: CreditCard },
+  { href: "/cafe", label: "Le Café", icon: Coffee },
 ]
 
 export function MobileNav({ isLoggedIn, dashboardLink, userName }: MobileNavProps) {

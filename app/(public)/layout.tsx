@@ -52,9 +52,6 @@ export default async function PublicLayout({
             <Link href="/studio" className="hover:opacity-70 transition-opacity">
               Studio
             </Link>
-            <Link href="/cafe" className="hover:opacity-70 transition-opacity">
-              Café
-            </Link>
             <Link href="/profs" className="hover:opacity-70 transition-opacity">
               Professeurs
             </Link>
@@ -63,6 +60,9 @@ export default async function PublicLayout({
             </Link>
             <Link href="/tarifs" className="hover:opacity-70 transition-opacity">
               Tarifs
+            </Link>
+            <Link href="/cafe" className="hover:opacity-70 transition-opacity">
+              Café
             </Link>
           </div>
           <div className="hidden md:flex items-center gap-4">

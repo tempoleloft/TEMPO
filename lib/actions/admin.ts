@@ -19,6 +19,7 @@ const createSessionSchema = z.object({
   time: z.string().min(1, "Heure requise"),
   capacity: z.number().min(1, "Capacité minimum 1").max(50, "Capacité maximum 50"),
   location: z.string().optional(),
+  durationMin: z.number().min(15, "Durée minimum 15 min").max(180, "Durée maximum 180 min").optional(),
 })
 
 export type CreateSessionInput = z.infer<typeof createSessionSchema>
@@ -40,9 +41,9 @@ export async function createSession(data: CreateSessionInput) {
       }
     }
 
-    const { classTypeId, teacherId, date, time, capacity, location } = parsed.data
+    const { classTypeId, teacherId, date, time, capacity, location, durationMin: customDuration } = parsed.data
 
-    // Get class type for duration
+    // Get class type for default duration
     const classType = await db.classType.findUnique({
       where: { id: classTypeId },
     })
@@ -51,9 +52,12 @@ export async function createSession(data: CreateSessionInput) {
       return { success: false, error: "Type de cours non trouvé" }
     }
 
+    // Use custom duration if provided, otherwise use class type default
+    const duration = customDuration || classType.durationMin
+
     // Combine date and time
     const startAt = new Date(`${date}T${time}:00`)
-    const endAt = addMinutes(startAt, classType.durationMin)
+    const endAt = addMinutes(startAt, duration)
 
     // Check for conflicts
     const conflict = await db.session.findFirst({

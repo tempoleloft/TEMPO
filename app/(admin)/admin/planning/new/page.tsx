@@ -43,6 +43,7 @@ export default function NewSessionPage() {
     time: "",
     capacity: 12,
     location: "",
+    durationMin: 60,
   })
 
   // Fetch class types and teachers
@@ -102,6 +103,7 @@ export default function NewSessionPage() {
         ...formData,
         classTypeId,
         capacity: Number(formData.capacity),
+        durationMin: Number(formData.durationMin),
       })
 
       if (!result.success) {
@@ -158,10 +160,15 @@ export default function NewSessionPage() {
                 onChange={(e) => {
                   if (e.target.value === "__new__") {
                     setShowNewClassType(true)
-                    setFormData({ ...formData, classTypeId: "" })
+                    setFormData({ ...formData, classTypeId: "", durationMin: 60 })
                   } else {
                     setShowNewClassType(false)
-                    setFormData({ ...formData, classTypeId: e.target.value })
+                    const selectedType = classTypes.find(ct => ct.id === e.target.value)
+                    setFormData({ 
+                      ...formData, 
+                      classTypeId: e.target.value,
+                      durationMin: selectedType?.durationMin || 60
+                    })
                   }
                 }}
                 required={!showNewClassType}
@@ -249,7 +256,7 @@ export default function NewSessionPage() {
               </select>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="date">Date *</Label>
                 <Input
@@ -267,6 +274,19 @@ export default function NewSessionPage() {
                   type="time"
                   value={formData.time}
                   onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="durationMin">Durée (min) *</Label>
+                <Input
+                  id="durationMin"
+                  type="number"
+                  min={15}
+                  max={180}
+                  step={5}
+                  value={formData.durationMin}
+                  onChange={(e) => setFormData({ ...formData, durationMin: parseInt(e.target.value) || 60 })}
                   required
                 />
               </div>

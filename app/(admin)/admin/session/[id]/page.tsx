@@ -11,6 +11,7 @@ import { Clock, MapPin, User, Users, ArrowLeft, Check, X, ClipboardList, Phone }
 import Link from "next/link"
 import { AttendanceButtons } from "@/components/admin/attendance-buttons"
 import { CancelSessionButton } from "@/components/admin/cancel-session-button"
+import { EditSessionButton } from "@/components/admin/edit-session-button"
 
 interface PageProps {
   params: { id: string }
@@ -74,12 +75,26 @@ export default async function AdminSessionPage({ params }: PageProps) {
           </div>
         </div>
         
-        <CancelSessionButton
-          sessionId={session.id}
-          sessionTitle={session.classType.title}
-          participantsCount={totalParticipants}
-          isCancelled={session.status === "CANCELLED"}
-        />
+        <div className="flex items-center gap-2">
+          {session.status !== "CANCELLED" && (
+            <EditSessionButton
+              sessionId={session.id}
+              currentData={{
+                date: format(session.startAt, "yyyy-MM-dd"),
+                time: format(session.startAt, "HH:mm"),
+                endTime: format(session.endAt, "HH:mm"),
+                capacity: session.capacity,
+                location: session.location,
+              }}
+            />
+          )}
+          <CancelSessionButton
+            sessionId={session.id}
+            sessionTitle={session.classType.title}
+            participantsCount={totalParticipants}
+            isCancelled={session.status === "CANCELLED"}
+          />
+        </div>
       </div>
 
       {/* Session Info */}

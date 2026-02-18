@@ -107,6 +107,91 @@ export async function createSession(data: CreateSessionInput) {
 }
 
 // ============================================================================
+// UPDATE SESSION
+// ============================================================================
+
+const updateSessionSchema = z.object({
+  date: z.string().min(1, "Date requise"),
+  time: z.string().min(1, "Heure de début requise"),
+  endTime: z.string().min(1, "Heure de fin requise"),
+  capacity: z.number().min(1, "Capacité minimum 1").max(50, "Capacité maximum 50"),
+  location: z.string().nullable(),
+})
+
+export async function updateSession(sessionId: string, data: z.infer<typeof updateSessionSchema>) {
+  const authSession = await auth()
+  
+  if (!authSession?.user || authSession.user.role !== "ADMIN") {
+    return { success: false, error: "Non autorisé" }
+  }
+
+  try {
+    const parsed = updateSessionSchema.safeParse(data)
+    
+    if (!parsed.success) {
+      return { 
+        success: false, 
+        error: parsed.error.errors[0]?.message || "Données invalides" 
+      }
+    }
+
+    const { date, time, endTime, capacity, location } = parsed.data
+
+    // Check if session exists
+    const existingSession = await db.session.findUnique({
+      where: { id: sessionId },
+      include: {
+        reservations: {
+          where: { status: "BOOKED" },
+        },
+      },
+    })
+
+    if (!existingSession) {
+      return { success: false, error: "Session non trouvée" }
+    }
+
+    // Check capacity isn't less than current reservations
+    if (capacity < existingSession.reservations.length) {
+      return { 
+        success: false, 
+        error: `La capacité ne peut pas être inférieure au nombre de réservations (${existingSession.reservations.length})` 
+      }
+    }
+
+    // Combine date and times
+    const startAt = new Date(`${date}T${time}:00`)
+    const endAt = new Date(`${date}T${endTime}:00`)
+
+    // Validate end time is after start time
+    if (endAt <= startAt) {
+      return { success: false, error: "L'heure de fin doit être après l'heure de début" }
+    }
+
+    // Update session
+    await db.session.update({
+      where: { id: sessionId },
+      data: {
+        startAt,
+        endAt,
+        capacity,
+        location,
+      },
+    })
+
+    revalidatePath(`/admin/session/${sessionId}`)
+    revalidatePath("/admin/planning")
+    revalidatePath("/planning")
+    revalidatePath("/app/planning")
+    
+    return { success: true }
+  } catch (error) {
+    console.error("Update session error:", error)
+    return { success: false, error: "Erreur lors de la modification du cours" }
+  }
+}
+
+// ============================================================================
 // CANCEL SESSION
 // ============================================================================
 

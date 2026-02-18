@@ -17,6 +17,7 @@ export async function GET() {
       id: true,
       title: true,
       durationMin: true,
+      level: true,
     },
     orderBy: { title: "asc" },
   })

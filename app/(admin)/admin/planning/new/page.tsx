@@ -15,6 +15,7 @@ interface ClassType {
   id: string
   title: string
   durationMin: number
+  level: string | null
 }
 
 interface Teacher {
@@ -180,7 +181,7 @@ export default function NewSessionPage() {
                 <option value="">Sélectionner un type</option>
                 {classTypes.map((ct) => (
                   <option key={ct.id} value={ct.id}>
-                    {ct.title} ({ct.durationMin} min)
+                    {ct.title} ({ct.durationMin} min){ct.level ? ` - ${ct.level}` : ""}
                   </option>
                 ))}
                 <option value="__new__">➕ Créer un nouveau type...</option>

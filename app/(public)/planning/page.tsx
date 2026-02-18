@@ -24,7 +24,7 @@ export default async function PublicPlanningPage({ searchParams }: PageProps) {
   
   const days = eachDayOfInterval({ start: weekStart, end: weekEnd })
 
-  // Get sessions for this week
+  // Get sessions for this week (optimized: count reservations instead of loading all)
   const sessions = await db.session.findMany({
     where: {
       status: "SCHEDULED",
@@ -35,9 +35,15 @@ export default async function PublicPlanningPage({ searchParams }: PageProps) {
     },
     include: {
       classType: true,
-      teacher: true,
-      reservations: {
-        where: { status: "BOOKED" },
+      teacher: {
+        select: { displayName: true },
+      },
+      _count: {
+        select: {
+          reservations: {
+            where: { status: "BOOKED" },
+          },
+        },
       },
     },
     orderBy: { startAt: "asc" },
@@ -113,7 +119,7 @@ export default async function PublicPlanningPage({ searchParams }: PageProps) {
               ) : (
                 <div className="divide-y">
                   {sessions.map((session) => {
-                    const spotsLeft = session.capacity - session.reservations.length
+                    const spotsLeft = session.capacity - session._count.reservations
                     const isFull = spotsLeft <= 0
                     
                     return (

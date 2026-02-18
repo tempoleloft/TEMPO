@@ -14,34 +14,42 @@ export default async function AdminProfsPage() {
   const monthStart = startOfMonth(now)
   const monthEnd = endOfMonth(now)
 
-  const teachers = await db.teacherProfile.findMany({
-    include: {
-      user: true,
-      _count: {
-        select: {
-          sessions: true,
+  // Fetch teachers and monthly session counts in parallel (2 queries instead of N+1)
+  const [teachers, monthlySessionCounts] = await Promise.all([
+    db.teacherProfile.findMany({
+      include: {
+        user: true,
+        _count: {
+          select: {
+            sessions: true,
+          },
         },
       },
-    },
-    orderBy: [
-      { isActive: "desc" },
-      { displayName: "asc" },
-    ],
-  })
+      orderBy: [
+        { isActive: "desc" },
+        { displayName: "asc" },
+      ],
+    }),
+    db.session.groupBy({
+      by: ['teacherId'],
+      where: {
+        startAt: { gte: monthStart, lte: monthEnd },
+        status: "SCHEDULED",
+      },
+      _count: { id: true },
+    }),
+  ])
 
-  // Count sessions this month separately
-  const teachersWithMonthCount = await Promise.all(
-    teachers.map(async (teacher) => {
-      const monthSessions = await db.session.count({
-        where: {
-          teacherId: teacher.id,
-          startAt: { gte: monthStart, lte: monthEnd },
-          status: "SCHEDULED",
-        },
-      })
-      return { ...teacher, monthSessions }
-    })
+  // Create a map for quick lookup
+  const monthCountMap = new Map(
+    monthlySessionCounts.map(item => [item.teacherId, item._count.id])
   )
+
+  // Merge data without extra queries
+  const teachersWithMonthCount = teachers.map(teacher => ({
+    ...teacher,
+    monthSessions: monthCountMap.get(teacher.id) || 0,
+  }))
   
   const activeTeachers = teachersWithMonthCount.filter(t => t.isActive)
   const hiddenTeachers = teachersWithMonthCount.filter(t => !t.isActive)

@@ -29,9 +29,11 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
     include: {
       clientProfile: true,
       wallet: true,
-      reservations: true,
-      purchases: {
-        where: { status: "PAID" },
+      _count: {
+        select: {
+          reservations: true,
+          purchases: true,
+        },
       },
     },
     orderBy: { createdAt: "desc" },
@@ -134,7 +136,7 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
                         </Badge>
                       </td>
                       <td className="py-3 text-center hidden md:table-cell">
-                        {client.reservations.length}
+                        {client._count.reservations}
                       </td>
                       <td className="py-3 text-sm text-muted-foreground hidden lg:table-cell">
                         {format(client.createdAt, "d MMM yyyy", { locale: fr })}

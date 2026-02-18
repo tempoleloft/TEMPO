@@ -80,6 +80,7 @@ export default async function AdminSessionPage({ params }: PageProps) {
             <EditSessionButton
               sessionId={session.id}
               currentData={{
+                classTypeId: session.classTypeId,
                 date: format(session.startAt, "yyyy-MM-dd"),
                 time: format(session.startAt, "HH:mm"),
                 endTime: format(session.endAt, "HH:mm"),

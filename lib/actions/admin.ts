@@ -111,6 +111,7 @@ export async function createSession(data: CreateSessionInput) {
 // ============================================================================
 
 const updateSessionSchema = z.object({
+  classTypeId: z.string().min(1, "Type de cours requis"),
   date: z.string().min(1, "Date requise"),
   time: z.string().min(1, "Heure de début requise"),
   endTime: z.string().min(1, "Heure de fin requise"),
@@ -135,7 +136,7 @@ export async function updateSession(sessionId: string, data: z.infer<typeof upda
       }
     }
 
-    const { date, time, endTime, capacity, location } = parsed.data
+    const { classTypeId, date, time, endTime, capacity, location } = parsed.data
 
     // Check if session exists
     const existingSession = await db.session.findUnique({
@@ -149,6 +150,15 @@ export async function updateSession(sessionId: string, data: z.infer<typeof upda
 
     if (!existingSession) {
       return { success: false, error: "Session non trouvée" }
+    }
+
+    // Check if class type exists
+    const classType = await db.classType.findUnique({
+      where: { id: classTypeId },
+    })
+
+    if (!classType) {
+      return { success: false, error: "Type de cours non trouvé" }
     }
 
     // Check capacity isn't less than current reservations
@@ -172,6 +182,7 @@ export async function updateSession(sessionId: string, data: z.infer<typeof upda
     await db.session.update({
       where: { id: sessionId },
       data: {
+        classTypeId,
         startAt,
         endAt,
         capacity,

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -17,9 +17,15 @@ import { Pencil } from "lucide-react"
 import { updateSession } from "@/lib/actions/admin"
 import { useRouter } from "next/navigation"
 
+interface ClassType {
+  id: string
+  title: string
+}
+
 interface EditSessionButtonProps {
   sessionId: string
   currentData: {
+    classTypeId: string
     date: string
     time: string
     endTime: string
@@ -33,14 +39,29 @@ export function EditSessionButton({ sessionId, currentData }: EditSessionButtonP
   const [open, setOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
+  const [classTypes, setClassTypes] = useState<ClassType[]>([])
   
   const [formData, setFormData] = useState({
+    classTypeId: currentData.classTypeId,
     date: currentData.date,
     time: currentData.time,
     endTime: currentData.endTime,
     capacity: currentData.capacity,
     location: currentData.location || "",
   })
+
+  useEffect(() => {
+    async function fetchClassTypes() {
+      const res = await fetch("/api/admin/class-types")
+      if (res.ok) {
+        const data = await res.json()
+        setClassTypes(data)
+      }
+    }
+    if (open) {
+      fetchClassTypes()
+    }
+  }, [open])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -49,6 +70,7 @@ export function EditSessionButton({ sessionId, currentData }: EditSessionButtonP
 
     try {
       const result = await updateSession(sessionId, {
+        classTypeId: formData.classTypeId,
         date: formData.date,
         time: formData.time,
         endTime: formData.endTime,
@@ -90,6 +112,23 @@ export function EditSessionButton({ sessionId, currentData }: EditSessionButtonP
               {error}
             </div>
           )}
+
+          <div className="space-y-2">
+            <Label htmlFor="classTypeId">Type de cours</Label>
+            <select
+              id="classTypeId"
+              value={formData.classTypeId}
+              onChange={(e) => setFormData({ ...formData, classTypeId: e.target.value })}
+              required
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              {classTypes.map((ct) => (
+                <option key={ct.id} value={ct.id}>
+                  {ct.title}
+                </option>
+              ))}
+            </select>
+          </div>
           
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">

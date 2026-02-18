@@ -237,6 +237,7 @@ model Session {
   endAt       DateTime
   capacity    Int           @default(12)
   location    String?       // "Salle principale", "Studio"
+  level       String?       // "Tous niveaux", "Débutant", "Intermédiaire", "Avancé"
   status      SessionStatus @default(SCHEDULED)
   notes       String?
   createdById String?

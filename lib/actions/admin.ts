@@ -20,6 +20,7 @@ const createSessionSchema = z.object({
   capacity: z.number().min(1, "Capacité minimum 1").max(50, "Capacité maximum 50"),
   location: z.string().optional(),
   durationMin: z.number().min(15, "Durée minimum 15 min").max(180, "Durée maximum 180 min").optional(),
+  level: z.string().optional(),
 })
 
 export type CreateSessionInput = z.infer<typeof createSessionSchema>
@@ -41,7 +42,7 @@ export async function createSession(data: CreateSessionInput) {
       }
     }
 
-    const { classTypeId, teacherId, date, time, capacity, location, durationMin: customDuration } = parsed.data
+    const { classTypeId, teacherId, date, time, capacity, location, durationMin: customDuration, level } = parsed.data
 
     // Get class type for default duration
     const classType = await db.classType.findUnique({
@@ -90,6 +91,7 @@ export async function createSession(data: CreateSessionInput) {
         endAt,
         capacity,
         location: location || null,
+        level: level || null,
         status: "SCHEDULED",
         createdById: session.user.id,
       },
@@ -117,6 +119,7 @@ const updateSessionSchema = z.object({
   endTime: z.string().min(1, "Heure de fin requise"),
   capacity: z.number().min(1, "Capacité minimum 1").max(50, "Capacité maximum 50"),
   location: z.string().nullable(),
+  level: z.string().nullable().optional(),
 })
 
 export async function updateSession(sessionId: string, data: z.infer<typeof updateSessionSchema>) {
@@ -136,7 +139,7 @@ export async function updateSession(sessionId: string, data: z.infer<typeof upda
       }
     }
 
-    const { classTypeId, date, time, endTime, capacity, location } = parsed.data
+    const { classTypeId, date, time, endTime, capacity, location, level } = parsed.data
 
     // Check if session exists
     const existingSession = await db.session.findUnique({
@@ -187,6 +190,7 @@ export async function updateSession(sessionId: string, data: z.infer<typeof upda
         endAt,
         capacity,
         location,
+        level: level || null,
       },
     })
 

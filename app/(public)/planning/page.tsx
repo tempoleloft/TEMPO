@@ -156,9 +156,9 @@ export default async function PublicPlanningPage({ searchParams }: PageProps) {
                         </div>
                         
                         <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4 pl-4 sm:pl-0">
-                          {session.classType.level && (
+                          {(session.level || session.classType.level) && (
                             <Badge variant="outline" className="hidden sm:inline-flex">
-                              {session.classType.level}
+                              {session.level || session.classType.level}
                             </Badge>
                           )}
                           

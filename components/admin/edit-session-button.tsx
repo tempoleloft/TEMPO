@@ -32,6 +32,7 @@ interface EditSessionButtonProps {
     endTime: string
     capacity: number
     location: string | null
+    level: string | null
   }
 }
 
@@ -56,6 +57,7 @@ export function EditSessionButton({ sessionId, currentData }: EditSessionButtonP
     endTime: currentData.endTime,
     capacity: currentData.capacity,
     location: currentData.location || "",
+    level: currentData.level || "",
   })
 
   useEffect(() => {
@@ -110,6 +112,7 @@ export function EditSessionButton({ sessionId, currentData }: EditSessionButtonP
         endTime: formData.endTime,
         capacity: formData.capacity,
         location: formData.location || null,
+        level: formData.level || null,
       })
 
       if (result.success) {
@@ -293,14 +296,30 @@ export function EditSessionButton({ sessionId, currentData }: EditSessionButtonP
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="location">Salle</Label>
-            <Input
-              id="location"
-              placeholder="Salle principale"
-              value={formData.location}
-              onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="location">Salle</Label>
+              <Input
+                id="location"
+                placeholder="Salle principale"
+                value={formData.location}
+                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="level">Niveau</Label>
+              <select
+                id="level"
+                value={formData.level}
+                onChange={(e) => setFormData({ ...formData, level: e.target.value })}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                <option value="">Tous niveaux</option>
+                <option value="Débutant">Débutant</option>
+                <option value="Intermédiaire">Intermédiaire</option>
+                <option value="Avancé">Avancé</option>
+              </select>
+            </div>
           </div>
 
           <DialogFooter>

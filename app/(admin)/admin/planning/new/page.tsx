@@ -34,6 +34,7 @@ export default function NewSessionPage() {
     title: "",
     description: "",
     durationMin: 60,
+    level: "",
   })
   
   const [formData, setFormData] = useState({
@@ -88,6 +89,7 @@ export default function NewSessionPage() {
           title: newClassType.title.trim(),
           description: newClassType.description.trim() || undefined,
           durationMin: newClassType.durationMin,
+          level: newClassType.level || undefined,
         })
 
         if (!classTypeResult.success || !classTypeResult.classTypeId) {
@@ -197,7 +199,7 @@ export default function NewSessionPage() {
                     size="sm"
                     onClick={() => {
                       setShowNewClassType(false)
-                      setNewClassType({ title: "", description: "", durationMin: 60 })
+                      setNewClassType({ title: "", description: "", durationMin: 60, level: "" })
                     }}
                   >
                     Annuler
@@ -223,17 +225,33 @@ export default function NewSessionPage() {
                     rows={2}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="newDuration">Durée (minutes) *</Label>
-                  <Input
-                    id="newDuration"
-                    type="number"
-                    min={15}
-                    max={180}
-                    value={newClassType.durationMin}
-                    onChange={(e) => setNewClassType({ ...newClassType, durationMin: parseInt(e.target.value) || 60 })}
-                    required={showNewClassType}
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="newDuration">Durée (minutes) *</Label>
+                    <Input
+                      id="newDuration"
+                      type="number"
+                      min={15}
+                      max={180}
+                      value={newClassType.durationMin}
+                      onChange={(e) => setNewClassType({ ...newClassType, durationMin: parseInt(e.target.value) || 60 })}
+                      required={showNewClassType}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="newLevel">Niveau</Label>
+                    <select
+                      id="newLevel"
+                      value={newClassType.level}
+                      onChange={(e) => setNewClassType({ ...newClassType, level: e.target.value })}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    >
+                      <option value="">Tous niveaux</option>
+                      <option value="Débutant">Débutant</option>
+                      <option value="Intermédiaire">Intermédiaire</option>
+                      <option value="Avancé">Avancé</option>
+                    </select>
+                  </div>
                 </div>
               </div>
             )}

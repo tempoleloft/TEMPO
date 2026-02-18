@@ -65,6 +65,9 @@ export default async function AdminSessionPage({ params }: PageProps) {
               <h1 className="text-3xl font-bold text-tempo-bordeaux">
                 {session.classType.title}
               </h1>
+              {session.classType.level && (
+                <Badge variant="secondary">{session.classType.level}</Badge>
+              )}
               {session.status === "CANCELLED" && (
                 <Badge variant="destructive">Annulé</Badge>
               )}

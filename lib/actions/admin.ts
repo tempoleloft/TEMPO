@@ -337,6 +337,7 @@ const createClassTypeSchema = z.object({
   title: z.string().min(1, "Nom requis").max(100, "Nom trop long"),
   description: z.string().optional(),
   durationMin: z.number().min(15, "Durée minimum 15 min").max(180, "Durée maximum 180 min"),
+  level: z.string().optional(),
 })
 
 export type CreateClassTypeInput = z.infer<typeof createClassTypeSchema>
@@ -358,7 +359,7 @@ export async function createClassType(data: CreateClassTypeInput) {
       }
     }
 
-    const { title, description, durationMin } = parsed.data
+    const { title, description, durationMin, level } = parsed.data
 
     // Check if class type with same title exists
     const existing = await db.classType.findFirst({
@@ -375,6 +376,7 @@ export async function createClassType(data: CreateClassTypeInput) {
         title,
         description: description || null,
         durationMin,
+        level: level || null,
       },
     })
 

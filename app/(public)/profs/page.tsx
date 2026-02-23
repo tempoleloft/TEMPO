@@ -43,7 +43,7 @@ export default async function ProfsPage() {
                         src={teacher.photoUrl} 
                         alt={teacher.displayName}
                         className="w-full h-full object-cover"
-                        style={{ objectPosition: teacher.displayName === 'Marie' ? '85% 0%' : 'center top' }}
+                        style={{ objectPosition: 'center top' }}
                       />
                     ) : (
                       <span className="text-4xl font-bold text-tempo-bordeaux/20">

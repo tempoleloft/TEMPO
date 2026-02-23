@@ -73,7 +73,7 @@ export default function StudioPage() {
               </p>
               <ul className="text-sm text-muted-foreground space-y-1">
                 <li>• Tapis et accessoires fournis</li>
-                <li>• Vestiaires avec douches</li>
+                <li>• Vestiaires</li>
                 <li>• Coin tisane</li>
               </ul>
             </div>
@@ -88,7 +88,7 @@ export default function StudioPage() {
               </p>
               <ul className="text-sm text-muted-foreground space-y-1">
                 <li>• Coin tisane et infusions</li>
-                <li>• Vestiaires avec douches</li>
+                <li>• Vestiaires</li>
                 <li>• Casiers sécurisés</li>
               </ul>
             </div>

@@ -43,8 +43,12 @@ export default function StudioPage() {
                 progrès durables plutôt qu'éphémères.
               </p>
             </div>
-            <div className="bg-tempo-taupe/30 rounded-lg aspect-square flex items-center justify-center">
-              <span className="text-6xl font-bold text-tempo-bordeaux/20">TEMPO</span>
+            <div className="rounded-lg overflow-hidden aspect-square">
+              <img 
+                src="/studio.png" 
+                alt="Studio Tempo - Le Loft"
+                className="w-full h-full object-cover"
+              />
             </div>
           </div>
         </div>

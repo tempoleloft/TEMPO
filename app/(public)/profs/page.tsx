@@ -42,7 +42,8 @@ export default async function ProfsPage() {
                       <img 
                         src={teacher.photoUrl} 
                         alt={teacher.displayName}
-                        className="w-full h-full object-cover object-center"
+                        className="w-full h-full object-cover"
+                        style={{ objectPosition: teacher.displayName === 'Marie' ? '70% 20%' : 'center top' }}
                       />
                     ) : (
                       <span className="text-4xl font-bold text-tempo-bordeaux/20">

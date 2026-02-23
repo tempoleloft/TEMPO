@@ -33,16 +33,16 @@ export default async function ProfsPage() {
       {/* Teachers Grid */}
       <section className="py-20 px-6">
         <div className="max-w-6xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-8">
+          <div className="grid md:grid-cols-2 gap-8 items-stretch">
             {teachers.map((teacher) => (
-              <Card key={teacher.id} className="overflow-hidden">
-                <div className="flex flex-col md:flex-row">
-                  <div className="md:w-1/3 bg-tempo-taupe/30 flex items-center justify-center min-h-[200px] md:min-h-[280px]">
+              <Card key={teacher.id} className="overflow-hidden h-full">
+                <div className="flex flex-col md:flex-row h-full">
+                  <div className="md:w-1/3 bg-tempo-taupe/30 flex items-center justify-center min-h-[200px] md:min-h-0">
                     {teacher.photoUrl ? (
                       <img 
                         src={teacher.photoUrl} 
                         alt={teacher.displayName}
-                        className="w-full h-full object-cover object-top"
+                        className="w-full h-full object-cover object-center"
                       />
                     ) : (
                       <span className="text-4xl font-bold text-tempo-bordeaux/20">
@@ -50,7 +50,7 @@ export default async function ProfsPage() {
                       </span>
                     )}
                   </div>
-                  <div className="md:w-2/3">
+                  <div className="md:w-2/3 flex flex-col">
                     <CardHeader>
                       <CardTitle className="text-tempo-bordeaux">
                         {teacher.displayName}
@@ -63,7 +63,7 @@ export default async function ProfsPage() {
                         ))}
                       </div>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="flex-1">
                       <p className="text-muted-foreground text-sm leading-relaxed">
                         {teacher.bio || "Professeur certifié au studio Tempo – Le Loft."}
                       </p>

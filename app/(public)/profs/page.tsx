@@ -37,12 +37,12 @@ export default async function ProfsPage() {
             {teachers.map((teacher) => (
               <Card key={teacher.id} className="overflow-hidden">
                 <div className="flex flex-col md:flex-row">
-                  <div className="md:w-1/3 bg-tempo-taupe/30 aspect-square md:aspect-auto flex items-center justify-center">
+                  <div className="md:w-1/3 bg-tempo-taupe/30 flex items-center justify-center min-h-[200px] md:min-h-[280px]">
                     {teacher.photoUrl ? (
                       <img 
                         src={teacher.photoUrl} 
                         alt={teacher.displayName}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover object-top"
                       />
                     ) : (
                       <span className="text-4xl font-bold text-tempo-bordeaux/20">

@@ -1491,3 +1491,56 @@ export async function updateTeacher(teacherId: string, data: {
     return { success: false, error: "Erreur lors de la mise à jour" }
   }
 }
+
+// ============================================================================
+// UPDATE CLIENT PROFILE
+// ============================================================================
+
+export async function updateClientProfile(userId: string, data: {
+  firstName: string
+  lastName: string
+  phone?: string
+}) {
+  const authSession = await auth()
+  
+  if (!authSession?.user || authSession.user.role !== "ADMIN") {
+    return { success: false, error: "Non autorisé" }
+  }
+
+  try {
+    // Check if client profile exists
+    const existingProfile = await db.clientProfile.findUnique({
+      where: { userId },
+    })
+
+    if (existingProfile) {
+      // Update existing profile
+      await db.clientProfile.update({
+        where: { userId },
+        data: {
+          firstName: data.firstName,
+          lastName: data.lastName,
+          phone: data.phone || existingProfile.phone,
+        },
+      })
+    } else {
+      // Create new profile
+      await db.clientProfile.create({
+        data: {
+          userId,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          phone: data.phone || "",
+        },
+      })
+    }
+
+    revalidatePath("/admin/clients")
+    revalidatePath(`/admin/clients/${userId}`)
+    
+    return { success: true }
+  } catch (error) {
+    console.error("Update client profile error:", error)
+    return { success: false, error: "Erreur lors de la mise à jour" }
+  }
+}

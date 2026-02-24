@@ -15,6 +15,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ClientActions } from "@/components/admin/client-actions"
 import { AdjustCreditsForm } from "@/components/admin/adjust-credits-form"
+import { EditClientForm } from "@/components/admin/edit-client-form"
 
 interface PageProps {
   params: { id: string }
@@ -94,8 +95,10 @@ export default async function AdminClientDetailPage({ params }: PageProps) {
                   ? "bg-red-200 text-red-700" 
                   : "bg-tempo-bordeaux text-tempo-creme"
               }`}>
-                {client.clientProfile?.firstName?.charAt(0) || "?"}
-                {client.clientProfile?.lastName?.charAt(0) || ""}
+                {client.clientProfile?.firstName?.charAt(0)?.toUpperCase() || 
+                 client.name?.split(" ")[0]?.charAt(0)?.toUpperCase() || "?"}
+                {client.clientProfile?.lastName?.charAt(0)?.toUpperCase() || 
+                 client.name?.split(" ")[1]?.charAt(0)?.toUpperCase() || ""}
               </div>
               <div>
                 <CardTitle className="text-2xl flex items-center gap-2">
@@ -114,11 +117,22 @@ export default async function AdminClientDetailPage({ params }: PageProps) {
             </div>
             
             {/* Actions */}
-            <ClientActions 
-              userId={client.id} 
-              isBlacklisted={client.isBlacklisted}
-              hasActiveReservations={client.reservations.some(r => r.status === "BOOKED")}
-            />
+            <div className="flex flex-col gap-2">
+              <EditClientForm 
+                userId={client.id}
+                currentData={{
+                  firstName: client.clientProfile?.firstName || "",
+                  lastName: client.clientProfile?.lastName || "",
+                  phone: client.clientProfile?.phone || "",
+                  name: client.name,
+                }}
+              />
+              <ClientActions 
+                userId={client.id} 
+                isBlacklisted={client.isBlacklisted}
+                hasActiveReservations={client.reservations.some(r => r.status === "BOOKED")}
+              />
+            </div>
           </div>
         </CardHeader>
         <CardContent>

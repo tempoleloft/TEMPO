@@ -116,8 +116,10 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
                               ? "bg-red-100 text-red-700" 
                               : "bg-tempo-bordeaux text-tempo-creme"
                           }`}>
-                            {client.clientProfile?.firstName?.charAt(0) || "?"}
-                            {client.clientProfile?.lastName?.charAt(0) || ""}
+                            {client.clientProfile?.firstName?.charAt(0)?.toUpperCase() || 
+                             client.name?.split(" ")[0]?.charAt(0)?.toUpperCase() || "?"}
+                            {client.clientProfile?.lastName?.charAt(0)?.toUpperCase() || 
+                             client.name?.split(" ")[1]?.charAt(0)?.toUpperCase() || ""}
                           </div>
                           <div className="min-w-0">
                             <p className="font-medium truncate">

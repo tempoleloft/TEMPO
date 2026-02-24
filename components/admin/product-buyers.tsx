@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -30,37 +30,39 @@ interface ProductBuyersProps {
 export function ProductBuyers({ productId, productName, purchaseCount }: ProductBuyersProps) {
   const [buyers, setBuyers] = useState<Buyer[]>([])
   const [loading, setLoading] = useState(false)
-  const [loaded, setLoaded] = useState(false)
+  const [open, setOpen] = useState(false)
 
-  const fetchBuyers = async () => {
-    if (loaded) return
-    setLoading(true)
-    try {
-      const res = await fetch(`/api/admin/products/${productId}/buyers`)
-      if (res.ok) {
-        const data = await res.json()
-        setBuyers(data.buyers)
-        setLoaded(true)
+  useEffect(() => {
+    if (open && buyers.length === 0 && !loading) {
+      const fetchBuyers = async () => {
+        setLoading(true)
+        try {
+          const res = await fetch(`/api/admin/products/${productId}/buyers`)
+          if (res.ok) {
+            const data = await res.json()
+            setBuyers(data.buyers || [])
+          }
+        } catch (error) {
+          console.error("Error fetching buyers:", error)
+        } finally {
+          setLoading(false)
+        }
       }
-    } catch (error) {
-      console.error("Error fetching buyers:", error)
-    } finally {
-      setLoading(false)
+      fetchBuyers()
     }
-  }
+  }, [open, productId, buyers.length, loading])
 
   if (purchaseCount === 0) {
     return null
   }
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button 
           variant="outline" 
           size="sm" 
           className="w-full mt-2"
-          onClick={fetchBuyers}
         >
           <Users className="h-4 w-4 mr-2" />
           Voir les acheteurs ({purchaseCount})

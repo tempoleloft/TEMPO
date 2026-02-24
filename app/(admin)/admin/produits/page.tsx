@@ -8,6 +8,7 @@ import { Plus, Package, Check, ShoppingBag, EyeOff } from "lucide-react"
 import Link from "next/link"
 import { ProductToggle } from "@/components/admin/product-toggle"
 import { ProductActions } from "@/components/admin/product-actions"
+import { ProductBuyers } from "@/components/admin/product-buyers"
 
 export default async function AdminProduitsPage() {
   const [products, purchaseStats] = await Promise.all([
@@ -131,6 +132,11 @@ export default async function AdminProduitsPage() {
                   {(stats.revenue / 100).toFixed(0)}€
                 </span>
               </div>
+              <ProductBuyers 
+                productId={product.id}
+                productName={product.name}
+                purchaseCount={stats.count}
+              />
             </div>
           )}
         </CardContent>

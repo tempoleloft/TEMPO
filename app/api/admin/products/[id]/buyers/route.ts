@@ -21,9 +21,14 @@ export async function GET(
       include: {
         user: {
           select: {
-            firstName: true,
-            lastName: true,
             email: true,
+            name: true,
+            clientProfile: {
+              select: {
+                firstName: true,
+                lastName: true,
+              },
+            },
           },
         },
       },
@@ -32,13 +37,19 @@ export async function GET(
       },
     })
 
-    const buyers = purchases.map((purchase) => ({
-      id: purchase.id,
-      userName: `${purchase.user.firstName || ""} ${purchase.user.lastName || ""}`.trim() || "Client",
-      userEmail: purchase.user.email,
-      purchaseDate: purchase.createdAt.toISOString(),
-      amount: purchase.amountCents / 100,
-    }))
+    const buyers = purchases.map((purchase) => {
+      const firstName = purchase.user.clientProfile?.firstName || ""
+      const lastName = purchase.user.clientProfile?.lastName || ""
+      const fullName = `${firstName} ${lastName}`.trim() || purchase.user.name || "Client"
+      
+      return {
+        id: purchase.id,
+        userName: fullName,
+        userEmail: purchase.user.email,
+        purchaseDate: purchase.createdAt.toISOString(),
+        amount: purchase.amountCents / 100,
+      }
+    })
 
     return NextResponse.json({ buyers })
   } catch (error) {

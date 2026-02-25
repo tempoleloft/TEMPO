@@ -36,12 +36,12 @@ export default async function TarifsPage() {
       <section className="py-12 sm:py-20 px-4 sm:px-6">
         <div className="max-w-5xl mx-auto">
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
-            {products.map((product, index) => {
+            {products.map((product) => {
               const pricePerClass = product.credits > 0 
                 ? (product.priceCents / 100 / product.credits).toFixed(0)
                 : (product.priceCents / 100).toFixed(0)
               
-              const isPopular = index === 2 // Carte 10 cours
+              const isPopular = product.featured
 
               return (
                 <Card 

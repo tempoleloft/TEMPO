@@ -764,6 +764,48 @@ export async function toggleProductActive(productId: string) {
   }
 }
 
+export async function toggleProductFeatured(productId: string) {
+  const authSession = await auth()
+  
+  if (!authSession?.user || authSession.user.role !== "ADMIN") {
+    return { success: false, error: "Non autorisé" }
+  }
+
+  try {
+    const product = await db.product.findUnique({
+      where: { id: productId },
+    })
+
+    if (!product) {
+      return { success: false, error: "Produit non trouvé" }
+    }
+
+    // If we're setting this product as featured, unfeatured all others first
+    if (!product.featured) {
+      await db.product.updateMany({
+        where: { featured: true },
+        data: { featured: false },
+      })
+    }
+
+    await db.product.update({
+      where: { id: productId },
+      data: {
+        featured: !product.featured,
+      },
+    })
+
+    revalidatePath("/admin/produits")
+    revalidatePath("/app/paiements")
+    revalidatePath("/tarifs")
+    
+    return { success: true, featured: !product.featured }
+  } catch (error) {
+    console.error("Toggle product featured error:", error)
+    return { success: false, error: "Erreur lors de la mise à jour" }
+  }
+}
+
 export async function deleteProduct(productId: string) {
   const authSession = await auth()
   

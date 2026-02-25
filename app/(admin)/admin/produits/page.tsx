@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Plus, Package, Check, ShoppingBag, EyeOff } from "lucide-react"
 import Link from "next/link"
 import { ProductToggle } from "@/components/admin/product-toggle"
+import { ProductFeaturedToggle } from "@/components/admin/product-featured-toggle"
 import { ProductActions } from "@/components/admin/product-actions"
 import { ProductBuyers } from "@/components/admin/product-buyers"
 
@@ -70,10 +71,18 @@ export default async function AdminProduitsPage() {
             <div className="flex-1 min-w-0">
               <CardTitle className="flex items-center gap-2">
                 {product.name}
+                {product.featured && (
+                  <Badge className="bg-yellow-500 text-white text-xs">
+                    Meilleure offre
+                  </Badge>
+                )}
               </CardTitle>
               <CardDescription>{product.description}</CardDescription>
             </div>
             <div className="flex items-center gap-1 ml-2">
+              {!isMerch && (
+                <ProductFeaturedToggle productId={product.id} isFeatured={product.featured} />
+              )}
               <ProductToggle productId={product.id} isActive={product.active} />
               <ProductActions 
                 productId={product.id} 

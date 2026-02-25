@@ -94,12 +94,12 @@ export default async function PaiementsPage({ searchParams }: PageProps) {
         <>
           <h2 className="text-lg sm:text-xl font-semibold text-tempo-bordeaux">Forfaits de cours</h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {products.filter(p => p.kind !== "MERCH").map((product, index) => {
+            {products.filter(p => p.kind !== "MERCH").map((product) => {
               const pricePerClass = product.credits > 0 
                 ? (product.priceCents / 100 / product.credits).toFixed(0)
                 : (product.priceCents / 100).toFixed(0)
               
-              const isPopular = index === 2
+              const isPopular = product.featured
 
               return (
                 <Card 

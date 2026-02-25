@@ -104,7 +104,8 @@ export async function createSession(data: CreateSessionInput) {
     return { success: true }
   } catch (error) {
     console.error("Create session error:", error)
-    return { success: false, error: "Erreur lors de la création du cours" }
+    const errorMessage = error instanceof Error ? error.message : "Erreur inconnue"
+    return { success: false, error: `Erreur: ${errorMessage}` }
   }
 }
 

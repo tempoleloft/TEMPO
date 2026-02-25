@@ -173,7 +173,7 @@ export function EditSessionButton({ sessionId, currentData }: EditSessionButtonP
             >
               {classTypes.map((ct) => (
                 <option key={ct.id} value={ct.id}>
-                  {ct.title} ({ct.durationMin} min){ct.level ? ` - ${ct.level}` : ""}
+                  {ct.title}{ct.level ? ` - ${ct.level}` : ""}
                 </option>
               ))}
               <option value="__new__">➕ Créer un nouveau type...</option>

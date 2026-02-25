@@ -209,7 +209,7 @@ export default function NewSessionPage() {
                 <option value="">Sélectionner un type</option>
                 {classTypes.map((ct) => (
                   <option key={ct.id} value={ct.id}>
-                    {ct.title} ({ct.durationMin} min){ct.level ? ` - ${ct.level}` : ""}
+                    {ct.title}{ct.level ? ` - ${ct.level}` : ""}
                   </option>
                 ))}
                 <option value="__new__">➕ Créer un nouveau type...</option>

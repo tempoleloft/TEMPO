@@ -48,6 +48,11 @@ export default function NewSessionPage() {
     durationMin: 60,
     level: "",
   })
+  
+  const [recurrence, setRecurrence] = useState({
+    enabled: false,
+    weeks: 4,
+  })
 
   // Fetch class types and teachers
   useEffect(() => {
@@ -103,15 +108,38 @@ export default function NewSessionPage() {
         classTypeId = classTypeResult.classTypeId
       }
 
-      const result = await createSession({
-        ...formData,
-        classTypeId,
-        capacity: Number(formData.capacity),
-        durationMin: Number(formData.durationMin),
-      })
+      // Create sessions (single or recurring)
+      const sessionsToCreate = recurrence.enabled ? recurrence.weeks : 1
+      let successCount = 0
+      let lastError = ""
+      
+      for (let i = 0; i < sessionsToCreate; i++) {
+        // Calculate the date for this session (add i weeks)
+        const baseDate = new Date(formData.date)
+        const sessionDate = new Date(baseDate)
+        sessionDate.setDate(sessionDate.getDate() + (i * 7))
+        const dateString = sessionDate.toISOString().split('T')[0]
+        
+        const result = await createSession({
+          ...formData,
+          date: dateString,
+          classTypeId,
+          capacity: Number(formData.capacity),
+          durationMin: Number(formData.durationMin),
+        })
 
-      if (!result.success) {
-        setError(result.error || "Une erreur est survenue")
+        if (result.success) {
+          successCount++
+        } else {
+          lastError = result.error || "Erreur"
+        }
+      }
+
+      if (successCount === 0) {
+        setError(lastError || "Une erreur est survenue")
+      } else if (successCount < sessionsToCreate) {
+        setError(`${successCount}/${sessionsToCreate} cours créés. Certains ont échoué.`)
+        setTimeout(() => router.push("/admin/planning"), 2000)
       } else {
         router.push("/admin/planning")
       }
@@ -312,6 +340,44 @@ export default function NewSessionPage() {
               </div>
             </div>
 
+            {/* Recurrence option */}
+            <div className="p-4 border rounded-lg bg-tempo-taupe/10 space-y-4">
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="recurrence"
+                  checked={recurrence.enabled}
+                  onChange={(e) => setRecurrence({ ...recurrence, enabled: e.target.checked })}
+                  className="h-4 w-4 rounded border-gray-300 text-tempo-bordeaux focus:ring-tempo-bordeaux"
+                />
+                <Label htmlFor="recurrence" className="font-medium cursor-pointer">
+                  Répéter ce cours plusieurs semaines
+                </Label>
+              </div>
+              
+              {recurrence.enabled && (
+                <div className="flex items-center gap-3 pl-7">
+                  <Label htmlFor="weeks">Nombre de semaines :</Label>
+                  <select
+                    id="weeks"
+                    value={recurrence.weeks}
+                    onChange={(e) => setRecurrence({ ...recurrence, weeks: parseInt(e.target.value) })}
+                    className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  >
+                    <option value={2}>2 semaines</option>
+                    <option value={4}>4 semaines</option>
+                    <option value={6}>6 semaines</option>
+                    <option value={8}>8 semaines</option>
+                    <option value={10}>10 semaines</option>
+                    <option value={12}>12 semaines</option>
+                  </select>
+                  <span className="text-sm text-muted-foreground">
+                    ({recurrence.weeks} cours seront créés)
+                  </span>
+                </div>
+              )}
+            </div>
+
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="capacity">Capacité *</Label>
@@ -356,7 +422,11 @@ export default function NewSessionPage() {
                 className="bg-tempo-bordeaux hover:bg-tempo-noir"
                 disabled={isLoading}
               >
-                {isLoading ? "Création..." : "Créer le cours"}
+                {isLoading 
+                  ? `Création${recurrence.enabled ? ` (${recurrence.weeks} cours)` : ""}...` 
+                  : recurrence.enabled 
+                    ? `Créer ${recurrence.weeks} cours` 
+                    : "Créer le cours"}
               </Button>
               <Button
                 type="button"

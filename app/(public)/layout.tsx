@@ -133,6 +133,18 @@ export default async function PublicLayout({
               <p className="text-sm opacity-70">41 Rue du Temple</p>
               <p className="text-sm opacity-70">75004 Paris</p>
               <p className="text-sm opacity-70 mt-2">contact@tempoleloft.com</p>
+              <a 
+                href="https://www.instagram.com/tempo_leloft/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-block mt-4 opacity-70 hover:opacity-100 transition-opacity"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect width="20" height="20" x="2" y="2" rx="5" ry="5"/>
+                  <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+                  <line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/>
+                </svg>
+              </a>
             </div>
           </div>
           <div className="border-t border-tempo-creme/10 pt-6 sm:pt-8 text-center text-xs sm:text-sm opacity-50">

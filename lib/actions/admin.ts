@@ -398,10 +398,10 @@ export async function createClassType(data: CreateClassTypeInput) {
 
 const createTeacherSchema = z.object({
   email: z.string().email("Email invalide"),
-  password: z.string().min(6, "Mot de passe minimum 6 caractères"),
   displayName: z.string().min(2, "Nom requis"),
   bio: z.string().optional(),
   specialties: z.array(z.string()).min(1, "Au moins une spécialité"),
+  sendWelcomeEmail: z.boolean().optional().default(true),
 })
 
 export type CreateTeacherInput = z.infer<typeof createTeacherSchema>
@@ -423,7 +423,7 @@ export async function createTeacher(data: CreateTeacherInput) {
       }
     }
 
-    const { email, password, displayName, bio, specialties } = parsed.data
+    const { email, displayName, bio, specialties, sendWelcomeEmail } = parsed.data
 
     // Check if user exists
     const existingUser = await db.user.findUnique({
@@ -434,11 +434,12 @@ export async function createTeacher(data: CreateTeacherInput) {
       return { success: false, error: "Un compte existe déjà avec cet email" }
     }
 
-    // Hash password
-    const passwordHash = await hash(password, 12)
+    // Generate a random temporary password (will be replaced when teacher sets their own)
+    const tempPassword = crypto.randomUUID()
+    const passwordHash = await hash(tempPassword, 12)
 
     // Create user with teacher profile
-    await db.user.create({
+    const newUser = await db.user.create({
       data: {
         email: email.toLowerCase(),
         passwordHash,
@@ -459,9 +460,28 @@ export async function createTeacher(data: CreateTeacherInput) {
       },
     })
 
+    // Send welcome email with password setup link
+    if (sendWelcomeEmail) {
+      // Create password reset token (24h validity)
+      const resetToken = crypto.randomUUID()
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000)
+      
+      await db.passwordResetToken.create({
+        data: {
+          token: resetToken,
+          userId: newUser.id,
+          expiresAt,
+        },
+      })
+
+      // Import and send welcome email
+      const { sendTeacherWelcomeEmail } = await import("@/lib/email")
+      await sendTeacherWelcomeEmail(email.toLowerCase(), resetToken, displayName)
+    }
+
     revalidatePath("/admin/profs")
     
-    return { success: true }
+    return { success: true, emailSent: sendWelcomeEmail }
   } catch (error) {
     console.error("Create teacher error:", error)
     return { success: false, error: "Erreur lors de la création du professeur" }

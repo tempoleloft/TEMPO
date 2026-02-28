@@ -398,6 +398,116 @@ export async function sendClassCancellationEmail(
   }
 }
 
+export async function sendTeacherWelcomeEmail(email: string, token: string, displayName: string) {
+  const setupUrl = `${BASE_URL}/reset-password?token=${token}`
+
+  try {
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to: email,
+      subject: "🎉 Bienvenue dans l'équipe Tempo – Configurez votre compte",
+      html: `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          </head>
+          <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #F2F1ED;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #F2F1ED; padding: 40px 20px;">
+              <tr>
+                <td align="center">
+                  <table width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    
+                    <!-- Header bordeaux -->
+                    <tr>
+                      <td style="background-color: #42101B; padding: 40px 40px 30px 40px; text-align: center;">
+                        <h1 style="margin: 0; font-size: 36px; font-weight: bold; color: #F2F1ED; letter-spacing: 2px;">TEMPO</h1>
+                        <p style="margin: 8px 0 0 0; font-size: 14px; color: #D4A574; letter-spacing: 1px;">LE LOFT • YOGA & PILATES</p>
+                      </td>
+                    </tr>
+                    
+                    <!-- Contenu principal -->
+                    <tr>
+                      <td style="padding: 50px 40px;">
+                        <h2 style="margin: 0 0 20px 0; font-size: 28px; color: #42101B; font-weight: 600;">
+                          Bienvenue ${displayName} ! 🙏
+                        </h2>
+                        
+                        <p style="margin: 0 0 25px 0; font-size: 16px; color: #555; line-height: 1.6;">
+                          Nous sommes ravis de vous accueillir dans l'équipe des professeurs de <strong>Tempo – Le Loft</strong> !
+                        </p>
+                        
+                        <p style="margin: 0 0 25px 0; font-size: 16px; color: #555; line-height: 1.6;">
+                          Votre compte professeur a été créé. Pour finaliser votre inscription et accéder à votre espace, veuillez définir votre mot de passe :
+                        </p>
+                        
+                        <!-- Bouton CTA -->
+                        <table width="100%" cellpadding="0" cellspacing="0">
+                          <tr>
+                            <td align="center" style="padding: 10px 0 30px 0;">
+                              <a href="${setupUrl}" style="display: inline-block; padding: 18px 50px; background-color: #42101B; color: #F2F1ED; text-decoration: none; border-radius: 50px; font-weight: 600; font-size: 16px; letter-spacing: 0.5px;">
+                                Configurer mon mot de passe
+                              </a>
+                            </td>
+                          </tr>
+                        </table>
+                        
+                        <!-- Ce qui vous attend -->
+                        <div style="background-color: #F9F8F6; border-radius: 12px; padding: 25px; margin-bottom: 25px;">
+                          <p style="margin: 0 0 15px 0; font-size: 14px; font-weight: 600; color: #42101B;">Votre espace professeur vous permet de :</p>
+                          <table cellpadding="0" cellspacing="0">
+                            <tr>
+                              <td style="padding: 5px 0; font-size: 14px; color: #666;">✓ &nbsp; Consulter votre planning de cours</td>
+                            </tr>
+                            <tr>
+                              <td style="padding: 5px 0; font-size: 14px; color: #666;">✓ &nbsp; Voir la liste des participants inscrits</td>
+                            </tr>
+                            <tr>
+                              <td style="padding: 5px 0; font-size: 14px; color: #666;">✓ &nbsp; Gérer les présences</td>
+                            </tr>
+                          </table>
+                        </div>
+                        
+                        <p style="margin: 0; font-size: 13px; color: #999; line-height: 1.5;">
+                          Ce lien expire dans 24 heures. Si vous avez des questions, contactez-nous à contact@tempoleloft.com
+                        </p>
+                      </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                      <td style="background-color: #F9F8F6; padding: 30px 40px; text-align: center; border-top: 1px solid #eee;">
+                        <p style="margin: 0 0 10px 0; font-size: 14px; font-weight: 600; color: #42101B;">Tempo – Le Loft</p>
+                        <p style="margin: 0 0 5px 0; font-size: 13px; color: #888;">41 Rue du Temple, 75004 Paris</p>
+                        <p style="margin: 0; font-size: 13px; color: #888;">
+                          <a href="mailto:contact@tempoleloft.com" style="color: #42101B; text-decoration: none;">contact@tempoleloft.com</a>
+                        </p>
+                      </td>
+                    </tr>
+                    
+                  </table>
+                  
+                  <!-- Lien de secours discret -->
+                  <p style="margin: 20px 0 0 0; font-size: 11px; color: #999; text-align: center;">
+                    Problème avec le bouton ? <a href="${setupUrl}" style="color: #42101B;">Cliquez ici</a>
+                  </p>
+                  
+                </td>
+              </tr>
+            </table>
+          </body>
+        </html>
+      `,
+    })
+    
+    return { success: true }
+  } catch (error) {
+    console.error("Teacher welcome email error:", error)
+    return { success: false, error: "Erreur lors de l'envoi de l'email" }
+  }
+}
+
 export async function sendPasswordResetEmail(email: string, token: string) {
   const resetUrl = `${BASE_URL}/reset-password?token=${token}`
 

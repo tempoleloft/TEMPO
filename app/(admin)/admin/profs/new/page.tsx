@@ -28,10 +28,10 @@ export default function NewTeacherPage() {
   
   const [formData, setFormData] = useState({
     email: "",
-    password: "",
     displayName: "",
     bio: "",
     specialties: [] as string[],
+    sendWelcomeEmail: true,
   })
 
   function addSpecialty(specialty: string) {
@@ -99,7 +99,7 @@ export default function NewTeacherPage() {
         <CardHeader>
           <CardTitle>Informations du professeur</CardTitle>
           <CardDescription>
-            Les identifiants seront envoyés au professeur
+            Un email de bienvenue sera envoyé pour configurer le mot de passe
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -131,21 +131,8 @@ export default function NewTeacherPage() {
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 required
               />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">Mot de passe temporaire *</Label>
-              <Input
-                id="password"
-                type="text"
-                placeholder="TempoProf2026!"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                required
-                minLength={6}
-              />
               <p className="text-xs text-muted-foreground">
-                Le professeur pourra changer son mot de passe plus tard
+                L'email sera utilisé pour la connexion du professeur
               </p>
             </div>
 
@@ -189,6 +176,25 @@ export default function NewTeacherPage() {
                 rows={4}
                 className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               />
+            </div>
+
+            {/* Email de bienvenue */}
+            <div className="p-4 border rounded-lg bg-tempo-taupe/10 space-y-3">
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="sendWelcomeEmail"
+                  checked={formData.sendWelcomeEmail}
+                  onChange={(e) => setFormData({ ...formData, sendWelcomeEmail: e.target.checked })}
+                  className="h-4 w-4 rounded border-gray-300 text-tempo-bordeaux focus:ring-tempo-bordeaux"
+                />
+                <Label htmlFor="sendWelcomeEmail" className="font-medium cursor-pointer">
+                  Envoyer un email de bienvenue
+                </Label>
+              </div>
+              <p className="text-sm text-muted-foreground pl-7">
+                Le professeur recevra un email avec un lien pour configurer son mot de passe et accéder à son espace.
+              </p>
             </div>
 
             <div className="flex gap-4 pt-4">

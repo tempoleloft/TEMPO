@@ -41,6 +41,7 @@ export default function EditTeacherPage({ params }: { params: { id: string } }) 
     bio: "",
     photoUrl: "",
     specialties: [] as string[],
+    email: "",
   })
   
   const [newSpecialty, setNewSpecialty] = useState("")
@@ -59,6 +60,7 @@ export default function EditTeacherPage({ params }: { params: { id: string } }) 
         bio: result.teacher.bio || "",
         photoUrl: result.teacher.photoUrl || "",
         specialties: result.teacher.specialties || [],
+        email: result.teacher.user.email,
       })
     } else {
       setError("Professeur non trouvé")
@@ -77,6 +79,7 @@ export default function EditTeacherPage({ params }: { params: { id: string } }) 
       bio: formData.bio || null,
       photoUrl: formData.photoUrl || null,
       specialties: formData.specialties,
+      email: formData.email,
     })
 
     if (result.success) {
@@ -223,6 +226,23 @@ export default function EditTeacherPage({ params }: { params: { id: string } }) 
                 required
                 className="mt-1"
               />
+            </div>
+
+            {/* Email */}
+            <div>
+              <Label htmlFor="email">Adresse email *</Label>
+              <Input
+                id="email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                required
+                className="mt-1"
+                placeholder="professeur@tempoleloft.com"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Email utilisé pour la connexion du professeur
+              </p>
             </div>
 
             {/* Bio */}

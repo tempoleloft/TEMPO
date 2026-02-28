@@ -1506,6 +1506,7 @@ export async function updateTeacher(teacherId: string, data: {
   bio?: string | null
   photoUrl?: string | null
   specialties?: string[]
+  email?: string
 }) {
   const authSession = await auth()
   
@@ -1514,6 +1515,34 @@ export async function updateTeacher(teacherId: string, data: {
   }
 
   try {
+    // Get teacher to find associated user
+    const existingTeacher = await db.teacherProfile.findUnique({
+      where: { id: teacherId },
+      include: { user: true },
+    })
+
+    if (!existingTeacher) {
+      return { success: false, error: "Professeur non trouvé" }
+    }
+
+    // Update email if provided and different
+    if (data.email && data.email !== existingTeacher.user.email) {
+      // Check if email is already taken
+      const emailTaken = await db.user.findUnique({
+        where: { email: data.email },
+      })
+      
+      if (emailTaken) {
+        return { success: false, error: "Cette adresse email est déjà utilisée" }
+      }
+
+      await db.user.update({
+        where: { id: existingTeacher.userId },
+        data: { email: data.email },
+      })
+    }
+
+    // Update teacher profile
     const teacher = await db.teacherProfile.update({
       where: { id: teacherId },
       data: {

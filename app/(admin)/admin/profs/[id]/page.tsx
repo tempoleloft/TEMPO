@@ -44,6 +44,7 @@ export default function EditTeacherPage({ params }: { params: { id: string } }) 
     email: "",
   })
   
+  const [newPassword, setNewPassword] = useState("")
   const [newSpecialty, setNewSpecialty] = useState("")
 
   useEffect(() => {
@@ -80,10 +81,12 @@ export default function EditTeacherPage({ params }: { params: { id: string } }) 
       photoUrl: formData.photoUrl || null,
       specialties: formData.specialties,
       email: formData.email,
+      newPassword: newPassword || undefined,
     })
 
     if (result.success) {
       setSuccess(true)
+      setNewPassword("")
       setTimeout(() => setSuccess(false), 3000)
     } else {
       setError(result.error || "Erreur lors de la mise à jour")
@@ -242,6 +245,23 @@ export default function EditTeacherPage({ params }: { params: { id: string } }) 
               />
               <p className="text-xs text-muted-foreground mt-1">
                 Email utilisé pour la connexion du professeur
+              </p>
+            </div>
+
+            {/* Password */}
+            <div>
+              <Label htmlFor="newPassword">Nouveau mot de passe</Label>
+              <Input
+                id="newPassword"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="mt-1"
+                placeholder="Laisser vide pour ne pas changer"
+                minLength={6}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Minimum 6 caractères. Laissez vide pour conserver le mot de passe actuel.
               </p>
             </div>
 

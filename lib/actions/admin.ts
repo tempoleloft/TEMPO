@@ -1507,6 +1507,7 @@ export async function updateTeacher(teacherId: string, data: {
   photoUrl?: string | null
   specialties?: string[]
   email?: string
+  newPassword?: string
 }) {
   const authSession = await auth()
   
@@ -1525,6 +1526,9 @@ export async function updateTeacher(teacherId: string, data: {
       return { success: false, error: "Professeur non trouvé" }
     }
 
+    // Prepare user updates
+    const userUpdates: { email?: string; passwordHash?: string } = {}
+
     // Update email if provided and different
     if (data.email && data.email !== existingTeacher.user.email) {
       // Check if email is already taken
@@ -1536,9 +1540,19 @@ export async function updateTeacher(teacherId: string, data: {
         return { success: false, error: "Cette adresse email est déjà utilisée" }
       }
 
+      userUpdates.email = data.email
+    }
+
+    // Update password if provided
+    if (data.newPassword && data.newPassword.trim().length >= 6) {
+      userUpdates.passwordHash = await hash(data.newPassword, 12)
+    }
+
+    // Apply user updates if any
+    if (Object.keys(userUpdates).length > 0) {
       await db.user.update({
         where: { id: existingTeacher.userId },
-        data: { email: data.email },
+        data: userUpdates,
       })
     }
 

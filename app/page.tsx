@@ -300,13 +300,14 @@ export default async function Home() {
                 href="https://www.instagram.com/tempo_leloft/" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="inline-block mt-4 opacity-70 hover:opacity-100 transition-opacity"
+                className="inline-flex items-center gap-2 mt-4 text-sm opacity-70 hover:opacity-100 transition-opacity"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <rect width="20" height="20" x="2" y="2" rx="5" ry="5"/>
                   <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
                   <line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/>
                 </svg>
+                @tempo_leloft
               </a>
             </div>
           </div>

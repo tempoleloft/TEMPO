@@ -90,10 +90,13 @@ export async function sendVerificationEmail(email: string, token: string, firstN
                     <tr>
                       <td style="background-color: #F9F8F6; padding: 30px 40px; text-align: center; border-top: 1px solid #eee;">
                         <p style="margin: 0 0 10px 0; font-size: 14px; font-weight: 600; color: #42101B;">Tempo – Le Loft</p>
-                        <p style="margin: 0 0 5px 0; font-size: 13px; color: #888;">12 Rue du Temple, 75004 Paris</p>
-                        <p style="margin: 0; font-size: 13px; color: #888;">
+                        <p style="margin: 0 0 5px 0; font-size: 13px; color: #888;">41 Rue du Temple, 75004 Paris</p>
+                        <p style="margin: 0 0 15px 0; font-size: 13px; color: #888;">
                           <a href="mailto:contact@tempoleloft.com" style="color: #42101B; text-decoration: none;">contact@tempoleloft.com</a>
                         </p>
+                        <a href="https://www.instagram.com/tempo_leloft/" style="display: inline-block; text-decoration: none;">
+                          <img src="https://cdn-icons-png.flaticon.com/512/174/174855.png" alt="Instagram" width="28" height="28" style="border-radius: 6px;">
+                        </a>
                       </td>
                     </tr>
                     
@@ -243,7 +246,12 @@ export async function sendWaitlistNotification(
               
               <div class="footer">
                 <p>Tempo – Le Loft<br>
-                12 Rue du Temple, 75004 Paris</p>
+                41 Rue du Temple, 75004 Paris</p>
+                <p style="margin-top: 15px;">
+                  <a href="https://www.instagram.com/tempo_leloft/" style="text-decoration: none;">
+                    <img src="https://cdn-icons-png.flaticon.com/512/174/174855.png" alt="Instagram" width="28" height="28" style="border-radius: 6px;">
+                  </a>
+                </p>
               </div>
             </div>
           </body>
@@ -376,9 +384,12 @@ export async function sendClassCancellationEmail(
                       <td style="background-color: #F9F8F6; padding: 30px 40px; text-align: center; border-top: 1px solid #eee;">
                         <p style="margin: 0 0 10px 0; font-size: 14px; font-weight: 600; color: #42101B;">Tempo – Le Loft</p>
                         <p style="margin: 0 0 5px 0; font-size: 13px; color: #888;">41 Rue du Temple, 75004 Paris</p>
-                        <p style="margin: 0; font-size: 13px; color: #888;">
+                        <p style="margin: 0 0 15px 0; font-size: 13px; color: #888;">
                           <a href="mailto:contact@tempoleloft.com" style="color: #42101B; text-decoration: none;">contact@tempoleloft.com</a>
                         </p>
+                        <a href="https://www.instagram.com/tempo_leloft/" style="display: inline-block; text-decoration: none;">
+                          <img src="https://cdn-icons-png.flaticon.com/512/174/174855.png" alt="Instagram" width="28" height="28" style="border-radius: 6px;">
+                        </a>
                       </td>
                     </tr>
                     
@@ -480,9 +491,12 @@ export async function sendTeacherWelcomeEmail(email: string, token: string, disp
                       <td style="background-color: #F9F8F6; padding: 30px 40px; text-align: center; border-top: 1px solid #eee;">
                         <p style="margin: 0 0 10px 0; font-size: 14px; font-weight: 600; color: #42101B;">Tempo – Le Loft</p>
                         <p style="margin: 0 0 5px 0; font-size: 13px; color: #888;">41 Rue du Temple, 75004 Paris</p>
-                        <p style="margin: 0; font-size: 13px; color: #888;">
+                        <p style="margin: 0 0 15px 0; font-size: 13px; color: #888;">
                           <a href="mailto:contact@tempoleloft.com" style="color: #42101B; text-decoration: none;">contact@tempoleloft.com</a>
                         </p>
+                        <a href="https://www.instagram.com/tempo_leloft/" style="display: inline-block; text-decoration: none;">
+                          <img src="https://cdn-icons-png.flaticon.com/512/174/174855.png" alt="Instagram" width="28" height="28" style="border-radius: 6px;">
+                        </a>
                       </td>
                     </tr>
                     
@@ -576,10 +590,13 @@ export async function sendPasswordResetEmail(email: string, token: string) {
                     <tr>
                       <td style="background-color: #F9F8F6; padding: 30px 40px; text-align: center; border-top: 1px solid #eee;">
                         <p style="margin: 0 0 10px 0; font-size: 14px; font-weight: 600; color: #42101B;">Tempo – Le Loft</p>
-                        <p style="margin: 0 0 5px 0; font-size: 13px; color: #888;">12 Rue du Temple, 75004 Paris</p>
-                        <p style="margin: 0; font-size: 13px; color: #888;">
+                        <p style="margin: 0 0 5px 0; font-size: 13px; color: #888;">41 Rue du Temple, 75004 Paris</p>
+                        <p style="margin: 0 0 15px 0; font-size: 13px; color: #888;">
                           <a href="mailto:contact@tempoleloft.com" style="color: #42101B; text-decoration: none;">contact@tempoleloft.com</a>
                         </p>
+                        <a href="https://www.instagram.com/tempo_leloft/" style="display: inline-block; text-decoration: none;">
+                          <img src="https://cdn-icons-png.flaticon.com/512/174/174855.png" alt="Instagram" width="28" height="28" style="border-radius: 6px;">
+                        </a>
                       </td>
                     </tr>
                     

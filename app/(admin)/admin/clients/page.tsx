@@ -9,6 +9,7 @@ import { format } from "date-fns"
 import { fr } from "date-fns/locale"
 import { Search, User, Eye, Ban } from "lucide-react"
 import Link from "next/link"
+import { CreateClientDialog } from "@/components/admin/create-client-dialog"
 
 interface PageProps {
   searchParams: { q?: string }
@@ -46,16 +47,19 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-tempo-bordeaux">Clients</h1>
-        <p className="text-muted-foreground mt-1">
-          {totalClients} client{totalClients > 1 ? "s" : ""} enregistré{totalClients > 1 ? "s" : ""}
-          {blacklistedCount > 0 && (
-            <span className="text-red-600 ml-2">
-              ({blacklistedCount} blacklisté{blacklistedCount > 1 ? "s" : ""})
-            </span>
-          )}
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-tempo-bordeaux">Clients</h1>
+          <p className="text-muted-foreground mt-1">
+            {totalClients} client{totalClients > 1 ? "s" : ""} enregistré{totalClients > 1 ? "s" : ""}
+            {blacklistedCount > 0 && (
+              <span className="text-red-600 ml-2">
+                ({blacklistedCount} blacklisté{blacklistedCount > 1 ? "s" : ""})
+              </span>
+            )}
+          </p>
+        </div>
+        <CreateClientDialog />
       </div>
 
       {/* Search */}

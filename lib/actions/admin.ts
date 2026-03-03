@@ -1650,3 +1650,76 @@ export async function updateClientProfile(userId: string, data: {
     return { success: false, error: "Erreur lors de la mise à jour" }
   }
 }
+
+// ============================================================================
+// CREATE CLIENT
+// ============================================================================
+
+const createClientSchema = z.object({
+  email: z.string().email("Email invalide"),
+  firstName: z.string().min(1, "Prénom requis"),
+  lastName: z.string().min(1, "Nom requis"),
+  phone: z.string().optional(),
+  initialCredits: z.number().min(0).default(0),
+})
+
+export type CreateClientInput = z.infer<typeof createClientSchema>
+
+export async function createClient(data: CreateClientInput) {
+  const authSession = await auth()
+  
+  if (!authSession?.user || authSession.user.role !== "ADMIN") {
+    return { success: false, error: "Non autorisé" }
+  }
+
+  try {
+    const parsed = createClientSchema.safeParse(data)
+    
+    if (!parsed.success) {
+      return { 
+        success: false, 
+        error: parsed.error.errors[0]?.message || "Données invalides" 
+      }
+    }
+
+    const { email, firstName, lastName, phone, initialCredits } = parsed.data
+
+    // Check if email already exists
+    const existingUser = await db.user.findUnique({
+      where: { email },
+    })
+
+    if (existingUser) {
+      return { success: false, error: "Un compte avec cet email existe déjà" }
+    }
+
+    // Create user with client profile and wallet
+    const user = await db.user.create({
+      data: {
+        email,
+        name: `${firstName} ${lastName}`,
+        role: "CLIENT",
+        emailVerified: new Date(), // Admin-created accounts are pre-verified
+        clientProfile: {
+          create: {
+            firstName,
+            lastName,
+            phone: phone || "",
+          },
+        },
+        wallet: {
+          create: {
+            creditsBalance: initialCredits,
+          },
+        },
+      },
+    })
+
+    revalidatePath("/admin/clients")
+    
+    return { success: true, userId: user.id }
+  } catch (error) {
+    console.error("Create client error:", error)
+    return { success: false, error: "Erreur lors de la création du client" }
+  }
+}

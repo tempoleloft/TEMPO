@@ -3,7 +3,9 @@ import { Resend } from "resend"
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 const FROM_EMAIL = process.env.FROM_EMAIL || "Tempo Le Loft <onboarding@resend.dev>"
-const BASE_URL = process.env.NEXTAUTH_URL || "http://localhost:3000"
+const BASE_URL = process.env.NODE_ENV === "production" 
+  ? "https://tempoleloft.com" 
+  : (process.env.NEXTAUTH_URL || "http://localhost:3000")
 
 export async function sendVerificationEmail(email: string, token: string, firstName?: string) {
   const verificationUrl = `${BASE_URL}/verify-email?token=${token}`

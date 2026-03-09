@@ -1723,3 +1723,84 @@ export async function createClient(data: CreateClientInput) {
     return { success: false, error: "Erreur lors de la création du client" }
   }
 }
+
+// ============================================================================
+// REORDER PRODUCTS
+// ============================================================================
+
+export async function moveProductOrder(productId: string, direction: "up" | "down") {
+  const authSession = await auth()
+  
+  if (!authSession?.user || authSession.user.role !== "ADMIN") {
+    return { success: false, error: "Non autorisé" }
+  }
+
+  try {
+    // Get all active products ordered by sortOrder
+    const products = await db.product.findMany({
+      where: { active: true },
+      orderBy: { sortOrder: "asc" },
+    })
+
+    const currentIndex = products.findIndex(p => p.id === productId)
+    if (currentIndex === -1) {
+      return { success: false, error: "Produit non trouvé" }
+    }
+
+    const targetIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1
+    
+    // Check bounds
+    if (targetIndex < 0 || targetIndex >= products.length) {
+      return { success: false, error: "Impossible de déplacer le produit" }
+    }
+
+    const currentProduct = products[currentIndex]
+    const targetProduct = products[targetIndex]
+
+    // Swap sortOrder values
+    await db.$transaction([
+      db.product.update({
+        where: { id: currentProduct.id },
+        data: { sortOrder: targetProduct.sortOrder },
+      }),
+      db.product.update({
+        where: { id: targetProduct.id },
+        data: { sortOrder: currentProduct.sortOrder },
+      }),
+    ])
+
+    revalidatePath("/admin/produits")
+    
+    return { success: true }
+  } catch (error) {
+    console.error("Move product order error:", error)
+    return { success: false, error: "Erreur lors du déplacement" }
+  }
+}
+
+export async function updateProductsOrder(productIds: string[]) {
+  const authSession = await auth()
+  
+  if (!authSession?.user || authSession.user.role !== "ADMIN") {
+    return { success: false, error: "Non autorisé" }
+  }
+
+  try {
+    // Update all products with their new order
+    await db.$transaction(
+      productIds.map((id, index) => 
+        db.product.update({
+          where: { id },
+          data: { sortOrder: index },
+        })
+      )
+    )
+
+    revalidatePath("/admin/produits")
+    
+    return { success: true }
+  } catch (error) {
+    console.error("Update products order error:", error)
+    return { success: false, error: "Erreur lors de la mise à jour de l'ordre" }
+  }
+}

@@ -10,6 +10,7 @@ import { ProductToggle } from "@/components/admin/product-toggle"
 import { ProductFeaturedToggle } from "@/components/admin/product-featured-toggle"
 import { ProductActions } from "@/components/admin/product-actions"
 import { ProductBuyers } from "@/components/admin/product-buyers"
+import { ProductOrderButtons } from "@/components/admin/product-order-buttons"
 
 export default async function AdminProduitsPage() {
   const [products, purchaseStats] = await Promise.all([
@@ -36,7 +37,7 @@ export default async function AdminProduitsPage() {
   const hiddenProducts = products.filter(p => !p.active)
 
   // Composant pour afficher une carte produit
-  function ProductCard({ product, isHidden = false }: { product: typeof products[0], isHidden?: boolean }) {
+  function ProductCard({ product, isHidden = false, index = 0, totalCount = 1 }: { product: typeof products[0], isHidden?: boolean, index?: number, totalCount?: number }) {
     const stats = statsMap.get(product.id)
     const pricePerClass = product.credits > 0
       ? (product.priceCents / 100 / product.credits).toFixed(0)
@@ -80,6 +81,13 @@ export default async function AdminProduitsPage() {
               <CardDescription>{product.description}</CardDescription>
             </div>
             <div className="flex items-center gap-1 ml-2">
+              {!isHidden && (
+                <ProductOrderButtons 
+                  productId={product.id} 
+                  isFirst={index === 0}
+                  isLast={index === totalCount - 1}
+                />
+              )}
               {!isMerch && (
                 <ProductFeaturedToggle productId={product.id} isFeatured={product.featured} />
               )}
@@ -174,8 +182,13 @@ export default async function AdminProduitsPage() {
       {/* Active Products Grid */}
       {activeProducts.length > 0 ? (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          {activeProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
+          {activeProducts.map((product, index) => (
+            <ProductCard 
+              key={product.id} 
+              product={product} 
+              index={index}
+              totalCount={activeProducts.length}
+            />
           ))}
         </div>
       ) : (

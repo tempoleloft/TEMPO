@@ -54,8 +54,7 @@ export default async function TarifsPage() {
                 Puis-je utiliser mes crédits pour tous les cours ?
               </h3>
               <p className="text-muted-foreground text-sm">
-                Oui, vos crédits sont valables pour tous nos cours : Yoga Vinyasa, 
-                Yoga Hatha, Pilates Mat et Barre au Sol.
+                Oui, vos crédits sont valables pour tous nos cours proposés au studio.
               </p>
             </div>
             
@@ -64,7 +63,7 @@ export default async function TarifsPage() {
                 Comment fonctionne l'annulation ?
               </h3>
               <p className="text-muted-foreground text-sm">
-                Vous pouvez annuler gratuitement jusqu'à 12h avant le cours. 
+                Vous pouvez annuler gratuitement jusqu'à 24h avant le cours. 
                 Votre crédit vous sera automatiquement restitué.
               </p>
             </div>
@@ -75,7 +74,7 @@ export default async function TarifsPage() {
               </h3>
               <p className="text-muted-foreground text-sm">
                 Les crédits non utilisés à l'expiration de votre carte sont perdus. 
-                Nous vous envoyons un rappel 7 jours avant l'expiration.
+                Pensez à les utiliser avant la date d'expiration indiquée dans votre espace.
               </p>
             </div>
             

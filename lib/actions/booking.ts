@@ -6,8 +6,8 @@ import { revalidatePath } from "next/cache"
 import { notifyNextInWaitlist } from "./waitlist"
 import { sendBookingConfirmationEmail } from "@/lib/email"
 
-// Cancellation policy: 12 hours before class
-const CANCEL_HOURS_BEFORE = 12
+// Cancellation policy: 24 hours before class
+const CANCEL_HOURS_BEFORE = 24
 
 export async function bookSession(sessionId: string) {
   const session = await auth()

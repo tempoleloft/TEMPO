@@ -127,8 +127,8 @@ export async function bookSession(sessionId: string) {
         emailData: {
           email: user?.email || "",
           firstName: user?.clientProfile?.firstName || user?.name?.split(" ")[0] || "Client",
-          className: classSession.classType.name,
-          teacherName: classSession.teacher.displayName,
+          className: classSession.classType?.title || "Cours",
+          teacherName: classSession.teacher?.displayName || "Professeur",
           classDate: classSession.startAt,
         }
       }

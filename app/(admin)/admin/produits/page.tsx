@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 export const dynamic = 'force-dynamic'
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Plus, Package, Check, ShoppingBag, EyeOff } from "lucide-react"
+import { Plus, Package, Check, ShoppingBag, EyeOff, Lock } from "lucide-react"
 import Link from "next/link"
 import { ProductToggle } from "@/components/admin/product-toggle"
 import { ProductFeaturedToggle } from "@/components/admin/product-featured-toggle"
@@ -70,14 +70,25 @@ export default async function AdminProduitsPage() {
         <CardHeader>
           <div className="flex items-start justify-between">
             <div className="flex-1 min-w-0">
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 flex-wrap">
                 {product.name}
                 {product.featured && (
                   <Badge className="bg-yellow-500 text-white text-xs">
                     Meilleure offre
                   </Badge>
                 )}
+                {product.isHidden && (
+                  <Badge variant="outline" className="text-xs border-purple-300 text-purple-700">
+                    <Lock className="h-3 w-3 mr-1" />
+                    Caché
+                  </Badge>
+                )}
               </CardTitle>
+              {product.isHidden && product.unlockCode && (
+                <p className="text-xs text-purple-600 font-mono mt-1">
+                  Code : {product.unlockCode}
+                </p>
+              )}
               <CardDescription>{product.description}</CardDescription>
             </div>
             <div className="flex items-center gap-1 ml-2">

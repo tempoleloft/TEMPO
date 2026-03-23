@@ -1,12 +1,10 @@
 import { db } from "@/lib/db"
 import { auth } from "@/lib/auth"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-
-export const dynamic = 'force-dynamic'
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { Check } from "lucide-react"
+import { TarifsSection } from "@/components/tarifs-section"
+
+export const dynamic = 'force-dynamic'
 
 export default async function TarifsPage() {
   const session = await auth()
@@ -16,6 +14,10 @@ export default async function TarifsPage() {
     where: { active: true },
     orderBy: { sortOrder: "asc" },
   })
+
+  // Separate visible and hidden products
+  const visibleProducts = products.filter(p => !p.isHidden)
+  const hiddenProducts = products.filter(p => p.isHidden)
 
   return (
     <div>
@@ -33,81 +35,11 @@ export default async function TarifsPage() {
       </section>
 
       {/* Pricing Cards */}
-      <section className="py-12 sm:py-20 px-4 sm:px-6">
-        <div className="max-w-5xl mx-auto">
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
-            {products.map((product) => {
-              const pricePerClass = product.credits > 0 
-                ? (product.priceCents / 100 / product.credits).toFixed(0)
-                : (product.priceCents / 100).toFixed(0)
-              
-              const isPopular = product.featured
-
-              return (
-                <Card 
-                  key={product.id} 
-                  className={`relative ${isPopular ? "border-tempo-bordeaux border-2 shadow-lg" : ""}`}
-                >
-                  {isPopular && (
-                    <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-tempo-bordeaux">
-                      Meilleure offre
-                    </Badge>
-                  )}
-                  <CardHeader className="text-center">
-                    <CardTitle className="text-tempo-bordeaux">
-                      {product.name}
-                    </CardTitle>
-                    <CardDescription>
-                      {product.description}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="text-center">
-                    <div className="mb-4">
-                      <span className="text-4xl font-bold text-tempo-bordeaux">
-                        {(product.priceCents / 100).toFixed(0)}€
-                      </span>
-                    </div>
-                    {product.credits > 1 && (
-                      <p className="text-sm text-muted-foreground mb-6">
-                        soit {pricePerClass}€ par cours
-                      </p>
-                    )}
-                    <ul className="space-y-3 text-left">
-                      <li className="flex items-center gap-2 text-sm">
-                        <Check className="h-4 w-4 text-green-600" />
-                        {product.credits} cours
-                      </li>
-                      <li className="flex items-center gap-2 text-sm">
-                        <Check className="h-4 w-4 text-green-600" />
-                        Valable {product.validityDays} jours
-                      </li>
-                      <li className="flex items-center gap-2 text-sm">
-                        <Check className="h-4 w-4 text-green-600" />
-                        Tous les cours inclus
-                      </li>
-                      {product.credits >= 10 && (
-                        <li className="flex items-center gap-2 text-sm">
-                          <Check className="h-4 w-4 text-green-600" />
-                          Meilleur rapport qualité/prix
-                        </li>
-                      )}
-                    </ul>
-                  </CardContent>
-                  <CardFooter>
-                    <Button 
-                      asChild 
-                      className={`w-full ${isPopular ? "bg-tempo-bordeaux hover:bg-tempo-noir" : ""}`}
-                      variant={isPopular ? "default" : "outline"}
-                    >
-                      <Link href={isLoggedIn ? "/app/paiements" : "/register"}>Acheter</Link>
-                    </Button>
-                  </CardFooter>
-                </Card>
-              )
-            })}
-          </div>
-        </div>
-      </section>
+      <TarifsSection 
+        visibleProducts={visibleProducts}
+        hiddenProducts={hiddenProducts}
+        isLoggedIn={isLoggedIn}
+      />
 
       {/* FAQ */}
       <section className="py-12 sm:py-20 px-4 sm:px-6 bg-tempo-taupe/20">

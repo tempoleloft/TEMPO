@@ -300,6 +300,8 @@ model Product {
   validityDays  Int?        // Nombre de jours de validité (null = illimité, ignored for MERCH)
   active        Boolean     @default(true)
   featured      Boolean     @default(false) // "Meilleure offre" badge
+  isHidden      Boolean     @default(false) // Produit caché, accessible uniquement avec un code
+  unlockCode    String?     // Code pour débloquer le produit caché
   sortOrder     Int         @default(0)
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt

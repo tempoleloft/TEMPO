@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ArrowLeft, Loader2 } from "lucide-react"
+import { ArrowLeft, Loader2, Lock } from "lucide-react"
 import { createProduct, CreateProductInput } from "@/lib/actions/admin"
 
 export default function NewProductPage() {
@@ -15,6 +15,7 @@ export default function NewProductPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [kind, setKind] = useState<"SINGLE" | "PACK" | "MERCH">("SINGLE")
+  const [isHidden, setIsHidden] = useState(false)
 
   const isMerch = kind === "MERCH"
 
@@ -33,6 +34,8 @@ export default function NewProductPage() {
       credits: isMerch ? 0 : parseInt(formData.get("credits") as string) || 0,
       validityDays: isMerch ? 0 : parseInt(formData.get("validityDays") as string) || 0,
       imageUrl: (formData.get("imageUrl") as string) || "",
+      isHidden: isHidden,
+      unlockCode: isHidden ? (formData.get("unlockCode") as string) || undefined : undefined,
     }
 
     try {
@@ -178,12 +181,49 @@ export default function NewProductPage() {
               )}
             </div>
 
+            {/* Produit caché */}
+            <div className="border rounded-lg p-4 space-y-4">
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="isHidden"
+                  checked={isHidden}
+                  onChange={(e) => setIsHidden(e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+                <div className="flex items-center gap-2">
+                  <Lock className="h-4 w-4 text-muted-foreground" />
+                  <Label htmlFor="isHidden" className="font-medium cursor-pointer">
+                    Produit caché (accessible uniquement avec un code)
+                  </Label>
+                </div>
+              </div>
+              
+              {isHidden && (
+                <div className="space-y-2 pl-7">
+                  <Label htmlFor="unlockCode">Code de déblocage *</Label>
+                  <Input
+                    id="unlockCode"
+                    name="unlockCode"
+                    placeholder="Ex: PROMO2026"
+                    required={isHidden}
+                    className="max-w-xs uppercase"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Les clients devront saisir ce code pour voir et acheter ce produit
+                  </p>
+                </div>
+              )}
+            </div>
+
             <div className="bg-tempo-taupe/10 p-4 rounded-lg">
               <h4 className="font-medium mb-2">Récapitulatif</h4>
               <p className="text-sm text-muted-foreground">
-                {isMerch 
-                  ? "Le produit merchandising sera créé. Les clients pourront l'acheter mais il ne donnera pas de crédits de cours."
-                  : "Le produit sera créé et immédiatement visible sur la page des tarifs. Vous pourrez le désactiver à tout moment."
+                {isHidden 
+                  ? "Ce produit caché ne sera visible que pour les clients qui saisissent le code de déblocage."
+                  : isMerch 
+                    ? "Le produit merchandising sera créé. Les clients pourront l'acheter mais il ne donnera pas de crédits de cours."
+                    : "Le produit sera créé et immédiatement visible sur la page des tarifs. Vous pourrez le désactiver à tout moment."
                 }
               </p>
             </div>

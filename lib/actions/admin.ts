@@ -652,6 +652,8 @@ const createProductSchema = z.object({
   validityDays: z.number().int().min(0).optional(), // 0 or null for MERCH
   imageUrl: z.string().url().optional().or(z.literal("")), // Optional image URL
   sortOrder: z.number().int().optional(),
+  isHidden: z.boolean().optional().default(false),
+  unlockCode: z.string().optional(),
 })
 
 export type CreateProductInput = z.infer<typeof createProductSchema>
@@ -673,7 +675,7 @@ export async function createProduct(data: CreateProductInput) {
       }
     }
 
-    const { name, description, kind, priceCents, credits, validityDays, imageUrl, sortOrder } = parsed.data
+    const { name, description, kind, priceCents, credits, validityDays, imageUrl, sortOrder, isHidden, unlockCode } = parsed.data
 
     // Get next sort order if not provided
     let finalSortOrder = sortOrder
@@ -695,6 +697,8 @@ export async function createProduct(data: CreateProductInput) {
         imageUrl: imageUrl || null,
         sortOrder: finalSortOrder,
         active: true,
+        isHidden: isHidden || false,
+        unlockCode: isHidden ? unlockCode?.toUpperCase() : null,
       },
     })
 
@@ -1802,5 +1806,36 @@ export async function updateProductsOrder(productIds: string[]) {
   } catch (error) {
     console.error("Update products order error:", error)
     return { success: false, error: "Erreur lors de la mise à jour de l'ordre" }
+  }
+}
+
+// ============================================================================
+// VERIFY UNLOCK CODE (Public - for clients)
+// ============================================================================
+
+export async function verifyUnlockCode(code: string) {
+  try {
+    const normalizedCode = code.toUpperCase().trim()
+    
+    // Find hidden products with this unlock code
+    const products = await db.product.findMany({
+      where: {
+        active: true,
+        isHidden: true,
+        unlockCode: normalizedCode,
+      },
+    })
+    
+    if (products.length === 0) {
+      return { success: false, error: "Code invalide" }
+    }
+    
+    return { 
+      success: true, 
+      productIds: products.map(p => p.id),
+    }
+  } catch (error) {
+    console.error("Verify unlock code error:", error)
+    return { success: false, error: "Erreur lors de la vérification" }
   }
 }

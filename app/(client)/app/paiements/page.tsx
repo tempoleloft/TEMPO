@@ -1,13 +1,13 @@
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 export const dynamic = 'force-dynamic'
 import { Badge } from "@/components/ui/badge"
 import { format } from "date-fns"
 import { fr } from "date-fns/locale"
-import { Check, CheckCircle, XCircle, ShieldCheck, ShoppingBag } from "lucide-react"
-import { CheckoutButton } from "@/components/checkout/checkout-button"
+import { CheckCircle, XCircle, ShieldCheck, ShoppingBag } from "lucide-react"
+import { ProductsWithUnlock } from "@/components/products-with-unlock"
 
 interface PageProps {
   searchParams: { success?: string; canceled?: string; session_id?: string }
@@ -43,6 +43,10 @@ export default async function PaiementsPage({ searchParams }: PageProps) {
       take: 10,
     }),
   ])
+
+  // Separate visible and hidden products
+  const visibleProducts = products.filter(p => !p.isHidden)
+  const hiddenProducts = products.filter(p => p.isHidden)
 
   return (
     <div className="space-y-8">
@@ -89,132 +93,11 @@ export default async function PaiementsPage({ searchParams }: PageProps) {
         </div>
       </div>
 
-      {/* Credit Products (Courses) */}
-      {products.filter(p => p.kind !== "MERCH").length > 0 && (
-        <>
-          <h2 className="text-lg sm:text-xl font-semibold text-tempo-bordeaux">Forfaits de cours</h2>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {products.filter(p => p.kind !== "MERCH").map((product) => {
-              const pricePerClass = product.credits > 0 
-                ? (product.priceCents / 100 / product.credits).toFixed(0)
-                : (product.priceCents / 100).toFixed(0)
-              
-              const isPopular = product.featured
-
-              return (
-                <Card 
-                  key={product.id} 
-                  className={`relative ${isPopular ? "border-tempo-bordeaux border-2 shadow-lg" : ""}`}
-                >
-                  {isPopular && (
-                    <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-tempo-bordeaux">
-                      Meilleure offre
-                    </Badge>
-                  )}
-                  {/* Product Image */}
-                  {product.imageUrl && (
-                    <div className="relative w-full aspect-square overflow-hidden rounded-t-lg">
-                      <img
-                        src={product.imageUrl}
-                        alt={product.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  )}
-                  <CardHeader className="text-center">
-                    <CardTitle className="text-tempo-bordeaux">
-                      {product.name}
-                    </CardTitle>
-                    <CardDescription>
-                      {product.description}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="text-center">
-                    <div className="mb-4">
-                      <span className="text-4xl font-bold text-tempo-bordeaux">
-                        {(product.priceCents / 100).toFixed(0)}€
-                      </span>
-                    </div>
-                    {product.credits > 1 && (
-                      <p className="text-sm text-muted-foreground mb-6">
-                        soit {pricePerClass}€ par cours
-                      </p>
-                    )}
-                    <ul className="space-y-3 text-left">
-                      <li className="flex items-center gap-2 text-sm">
-                        <Check className="h-4 w-4 text-green-600" />
-                        {product.credits} cours
-                      </li>
-                      <li className="flex items-center gap-2 text-sm">
-                        <Check className="h-4 w-4 text-green-600" />
-                        Valable {product.validityDays} jours
-                      </li>
-                      <li className="flex items-center gap-2 text-sm">
-                        <Check className="h-4 w-4 text-green-600" />
-                        Tous les cours inclus
-                      </li>
-                    </ul>
-                  </CardContent>
-                  <CardFooter>
-                    <CheckoutButton 
-                      productId={product.id}
-                      isPopular={isPopular}
-                    />
-                  </CardFooter>
-                </Card>
-              )
-            })}
-          </div>
-        </>
-      )}
-
-      {/* Merch Products */}
-      {products.filter(p => p.kind === "MERCH").length > 0 && (
-        <>
-          <h2 className="text-xl font-semibold text-tempo-bordeaux flex items-center gap-2 mt-8">
-            <ShoppingBag className="h-5 w-5" />
-            Boutique
-          </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-            {products.filter(p => p.kind === "MERCH").map((product) => (
-              <Card key={product.id} className="relative">
-                {/* Product Image */}
-                {product.imageUrl ? (
-                  <div className="relative w-full aspect-square overflow-hidden rounded-t-lg">
-                    <img
-                      src={product.imageUrl}
-                      alt={product.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                ) : (
-                  <div className="w-full aspect-square bg-tempo-taupe/10 rounded-t-lg flex items-center justify-center">
-                    <ShoppingBag className="h-12 w-12 text-tempo-taupe/50" />
-                  </div>
-                )}
-                <CardHeader className="text-center pb-2">
-                  <CardTitle className="text-lg text-tempo-bordeaux">
-                    {product.name}
-                  </CardTitle>
-                  {product.description && (
-                    <CardDescription className="text-sm">
-                      {product.description}
-                    </CardDescription>
-                  )}
-                </CardHeader>
-                <CardContent className="text-center pb-4">
-                  <span className="text-2xl font-bold text-tempo-bordeaux">
-                    {(product.priceCents / 100).toFixed(0)}€
-                  </span>
-                </CardContent>
-                <CardFooter>
-                  <CheckoutButton productId={product.id} />
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
-        </>
-      )}
+      {/* Products with unlock code support */}
+      <ProductsWithUnlock 
+        visibleProducts={visibleProducts}
+        hiddenProducts={hiddenProducts}
+      />
 
       {/* Security notice */}
       <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">

@@ -79,9 +79,14 @@ export default async function AdminDashboard() {
             Vue d'ensemble de votre studio
           </p>
         </div>
-        <Button asChild className="bg-tempo-bordeaux hover:bg-tempo-noir w-full sm:w-auto">
-          <Link href="/admin/planning">Gérer le planning</Link>
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <Button asChild variant="outline" className="w-full sm:w-auto">
+            <Link href="/admin/disciplines">Gérer les disciplines</Link>
+          </Button>
+          <Button asChild className="bg-tempo-bordeaux hover:bg-tempo-noir w-full sm:w-auto">
+            <Link href="/admin/planning">Gérer le planning</Link>
+          </Button>
+        </div>
       </div>
 
       {/* Stats Grid */}

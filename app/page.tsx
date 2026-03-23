@@ -3,10 +3,25 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { MobileNav } from "@/components/layout/mobile-nav"
 import { auth } from "@/lib/auth"
+import { db } from "@/lib/db"
 import { User } from "lucide-react"
 
 export default async function Home() {
   const session = await auth()
+  const classTypes = await db.classType.findMany({
+    where: { active: true },
+    select: { id: true, title: true, description: true },
+    orderBy: { title: "asc" },
+  })
+  const disciplines =
+    classTypes.length > 0
+      ? classTypes
+      : [
+          { id: "fallback-vinyasa", title: "Yoga Vinyasa", description: "Flow dynamique" },
+          { id: "fallback-hatha", title: "Yoga Hatha", description: "Douceur & précision" },
+          { id: "fallback-pilates", title: "Pilates Mat", description: "Renforcement profond" },
+          { id: "fallback-barre", title: "Barre au Sol", description: "Grâce & maintien" },
+        ]
   const isLoggedIn = !!session?.user
   const userName = session?.user?.name || session?.user?.email?.split("@")[0]
   const userRole = session?.user?.role
@@ -171,21 +186,16 @@ export default async function Home() {
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
-            {[
-              { name: "Yoga Vinyasa", desc: "Flow dynamique" },
-              { name: "Yoga Hatha", desc: "Douceur & précision" },
-              { name: "Pilates Mat", desc: "Renforcement profond" },
-              { name: "Barre au Sol", desc: "Grâce & maintien" },
-            ].map((discipline) => (
+            {disciplines.map((discipline) => (
               <div 
-                key={discipline.name}
+                key={discipline.id}
                 className="bg-white p-4 sm:p-8 rounded-lg shadow-sm hover:shadow-md transition-shadow"
               >
                 <h3 className="text-base sm:text-xl font-semibold text-tempo-bordeaux mb-1 sm:mb-2">
-                  {discipline.name}
+                  {discipline.title}
                 </h3>
                 <p className="text-tempo-noir/60 text-xs sm:text-sm">
-                  {discipline.desc}
+                  {discipline.description || "Description à venir"}
                 </p>
               </div>
             ))}

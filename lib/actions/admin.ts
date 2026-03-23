@@ -385,10 +385,138 @@ export async function createClassType(data: CreateClassTypeInput) {
       },
     })
 
+    revalidatePath("/admin/disciplines")
+    revalidatePath("/admin/planning/new")
+    revalidatePath("/")
+
     return { success: true, classTypeId: classType.id }
   } catch (error) {
     console.error("Create class type error:", error)
     return { success: false, error: "Erreur lors de la création du type de cours" }
+  }
+}
+
+export async function getClassTypesAdmin() {
+  const session = await auth()
+
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return { success: false, error: "Non autorisé" as const }
+  }
+
+  try {
+    const classTypes = await db.classType.findMany({
+      orderBy: { title: "asc" },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        durationMin: true,
+        level: true,
+        active: true,
+      },
+    })
+
+    return { success: true as const, classTypes }
+  } catch (error) {
+    console.error("Get class types error:", error)
+    return { success: false as const, error: "Erreur lors du chargement des disciplines" }
+  }
+}
+
+const updateClassTypeSchema = z.object({
+  title: z.string().min(1, "Nom requis").max(100, "Nom trop long"),
+  description: z.string().optional(),
+  durationMin: z.number().min(15, "Durée minimum 15 min").max(180, "Durée maximum 180 min"),
+  level: z.string().optional(),
+})
+
+export type UpdateClassTypeInput = z.infer<typeof updateClassTypeSchema>
+
+export async function updateClassType(classTypeId: string, data: UpdateClassTypeInput) {
+  const session = await auth()
+
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return { success: false, error: "Non autorisé" }
+  }
+
+  try {
+    const parsed = updateClassTypeSchema.safeParse(data)
+
+    if (!parsed.success) {
+      return {
+        success: false,
+        error: parsed.error.errors[0]?.message || "Données invalides",
+      }
+    }
+
+    const { title, description, durationMin, level } = parsed.data
+
+    const existing = await db.classType.findFirst({
+      where: {
+        id: { not: classTypeId },
+        title: { equals: title, mode: "insensitive" },
+      },
+      select: { id: true },
+    })
+
+    if (existing) {
+      return { success: false, error: "Un type de cours avec ce nom existe déjà" }
+    }
+
+    await db.classType.update({
+      where: { id: classTypeId },
+      data: {
+        title,
+        description: description || null,
+        durationMin,
+        level: level || null,
+      },
+    })
+
+    revalidatePath("/admin/disciplines")
+    revalidatePath("/admin/planning")
+    revalidatePath("/admin/planning/new")
+    revalidatePath("/planning")
+    revalidatePath("/")
+
+    return { success: true }
+  } catch (error) {
+    console.error("Update class type error:", error)
+    return { success: false, error: "Erreur lors de la mise à jour du type de cours" }
+  }
+}
+
+export async function toggleClassTypeActive(classTypeId: string) {
+  const session = await auth()
+
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return { success: false, error: "Non autorisé" }
+  }
+
+  try {
+    const classType = await db.classType.findUnique({
+      where: { id: classTypeId },
+      select: { active: true },
+    })
+
+    if (!classType) {
+      return { success: false, error: "Type de cours non trouvé" }
+    }
+
+    await db.classType.update({
+      where: { id: classTypeId },
+      data: { active: !classType.active },
+    })
+
+    revalidatePath("/admin/disciplines")
+    revalidatePath("/admin/planning/new")
+    revalidatePath("/planning")
+    revalidatePath("/")
+
+    return { success: true, active: !classType.active }
+  } catch (error) {
+    console.error("Toggle class type active error:", error)
+    return { success: false, error: "Erreur lors de la modification du type de cours" }
   }
 }
 

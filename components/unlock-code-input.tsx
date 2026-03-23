@@ -47,12 +47,12 @@ export function UnlockCodeInput({ onUnlock, unlockedIds }: UnlockCodeInputProps)
   }
 
   return (
-    <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-xl p-4 sm:p-6">
+    <div className="bg-tempo-taupe/20 border border-tempo-taupe/30 rounded-xl p-4 sm:p-6">
       <div className="flex items-center gap-2 mb-3">
-        <Lock className="h-5 w-5 text-purple-600" />
-        <h3 className="font-semibold text-purple-900">Vous avez un code ?</h3>
+        <Lock className="h-5 w-5 text-tempo-bordeaux" />
+        <h3 className="font-semibold text-tempo-bordeaux">Vous avez un code ?</h3>
       </div>
-      <p className="text-sm text-purple-700 mb-4">
+      <p className="text-sm text-tempo-noir/70 mb-4">
         Entrez votre code pour débloquer des offres exclusives
       </p>
       
@@ -64,13 +64,13 @@ export function UnlockCodeInput({ onUnlock, unlockedIds }: UnlockCodeInputProps)
             setError("")
           }}
           placeholder="VOTRE CODE"
-          className="uppercase font-mono bg-white"
+          className="uppercase font-mono bg-white border-tempo-taupe/50"
           disabled={isLoading}
         />
         <Button 
           type="submit" 
           disabled={isLoading || !code.trim()}
-          className="bg-purple-600 hover:bg-purple-700 shrink-0"
+          className="bg-tempo-bordeaux hover:bg-tempo-noir shrink-0"
         >
           {isLoading ? (
             <Loader2 className="h-4 w-4 animate-spin" />

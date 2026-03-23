@@ -17,7 +17,8 @@ import {
   BookOpen,
   Menu,
   X,
-  Coffee
+  Coffee,
+  Wallet
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -49,6 +50,7 @@ const adminNav: NavItem[] = [
   { title: "Clients", href: "/admin/clients", icon: <Users className="h-4 w-4" /> },
   { title: "Professeurs", href: "/admin/profs", icon: <User className="h-4 w-4" /> },
   { title: "Produits", href: "/admin/produits", icon: <LayoutGrid className="h-4 w-4" /> },
+  { title: "Finances", href: "/admin/finances", icon: <Wallet className="h-4 w-4" /> },
   { title: "Carte Café", href: "/admin/cafe", icon: <Coffee className="h-4 w-4" /> },
   { title: "Paramètres", href: "/admin/settings", icon: <Settings className="h-4 w-4" /> },
 ]

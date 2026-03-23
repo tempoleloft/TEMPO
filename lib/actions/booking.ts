@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { revalidatePath } from "next/cache"
 import { notifyNextInWaitlist } from "./waitlist"
+import { sendBookingConfirmationEmail } from "@/lib/email"
 
 // Cancellation policy: 12 hours before class
 const CANCEL_HOURS_BEFORE = 12
@@ -27,6 +28,8 @@ export async function bookSession(sessionId: string) {
           reservations: {
             where: { status: "BOOKED" },
           },
+          classType: true,
+          teacher: true,
         },
       })
 
@@ -113,12 +116,34 @@ export async function bookSession(sessionId: string) {
         })
       }
 
-      return { success: true }
+      // Get user info for email
+      const user = await tx.user.findUnique({
+        where: { id: userId },
+        include: { clientProfile: true },
+      })
+
+      return { 
+        success: true,
+        emailData: {
+          email: user?.email || "",
+          firstName: user?.clientProfile?.firstName || user?.name?.split(" ")[0] || "Client",
+          className: classSession.classType.name,
+          teacherName: classSession.teacher.displayName,
+          classDate: classSession.startAt,
+        }
+      }
     })
+
+    // Send confirmation email (outside transaction)
+    if (result.success && result.emailData) {
+      const { email, firstName, className, teacherName, classDate } = result.emailData
+      sendBookingConfirmationEmail(email, firstName, className, teacherName, classDate)
+        .catch(err => console.error("Failed to send booking confirmation email:", err))
+    }
 
     revalidatePath("/app/planning")
     revalidatePath("/app")
-    return result
+    return { success: result.success }
   } catch (error) {
     console.error("Booking error:", error)
     return {

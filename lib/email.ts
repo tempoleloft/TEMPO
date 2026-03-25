@@ -29,11 +29,10 @@ export async function sendVerificationEmail(email: string, token: string, firstN
                 <td align="center">
                   <table width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
                     
-                    <!-- Header bordeaux -->
+                    <!-- Header bordeaux avec logo -->
                     <tr>
                       <td style="background-color: #42101B; padding: 40px 40px 30px 40px; text-align: center;">
-                        <h1 style="margin: 0; font-size: 36px; font-weight: bold; color: #F2F1ED; letter-spacing: 2px;">TEMPO</h1>
-                        <p style="margin: 8px 0 0 0; font-size: 14px; color: #D4A574; letter-spacing: 1px;">LE LOFT • YOGA & PILATES</p>
+                        <img src="${BASE_URL}/logo-email.png" alt="TEMPO Le Loft" width="220" style="max-width: 220px; height: auto;">
                       </td>
                     </tr>
                     
@@ -304,11 +303,10 @@ export async function sendClassCancellationEmail(
                 <td align="center">
                   <table width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
                     
-                    <!-- Header bordeaux -->
+                    <!-- Header bordeaux avec logo -->
                     <tr>
                       <td style="background-color: #42101B; padding: 40px 40px 30px 40px; text-align: center;">
-                        <h1 style="margin: 0; font-size: 36px; font-weight: bold; color: #F2F1ED; letter-spacing: 2px;">TEMPO</h1>
-                        <p style="margin: 8px 0 0 0; font-size: 14px; color: #D4A574; letter-spacing: 1px;">LE LOFT • YOGA & PILATES</p>
+                        <img src="${BASE_URL}/logo-email.png" alt="TEMPO Le Loft" width="220" style="max-width: 220px; height: auto;">
                       </td>
                     </tr>
                     
@@ -432,11 +430,10 @@ export async function sendTeacherWelcomeEmail(email: string, token: string, disp
                 <td align="center">
                   <table width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
                     
-                    <!-- Header bordeaux -->
+                    <!-- Header bordeaux avec logo -->
                     <tr>
                       <td style="background-color: #42101B; padding: 40px 40px 30px 40px; text-align: center;">
-                        <h1 style="margin: 0; font-size: 36px; font-weight: bold; color: #F2F1ED; letter-spacing: 2px;">TEMPO</h1>
-                        <p style="margin: 8px 0 0 0; font-size: 14px; color: #D4A574; letter-spacing: 1px;">LE LOFT • YOGA & PILATES</p>
+                        <img src="${BASE_URL}/logo-email.png" alt="TEMPO Le Loft" width="220" style="max-width: 220px; height: auto;">
                       </td>
                     </tr>
                     
@@ -545,11 +542,10 @@ export async function sendPasswordResetEmail(email: string, token: string) {
                 <td align="center">
                   <table width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
                     
-                    <!-- Header bordeaux -->
+                    <!-- Header bordeaux avec logo -->
                     <tr>
                       <td style="background-color: #42101B; padding: 40px 40px 30px 40px; text-align: center;">
-                        <h1 style="margin: 0; font-size: 36px; font-weight: bold; color: #F2F1ED; letter-spacing: 2px;">TEMPO</h1>
-                        <p style="margin: 8px 0 0 0; font-size: 14px; color: #D4A574; letter-spacing: 1px;">LE LOFT • YOGA & PILATES</p>
+                        <img src="${BASE_URL}/logo-email.png" alt="TEMPO Le Loft" width="220" style="max-width: 220px; height: auto;">
                       </td>
                     </tr>
                     

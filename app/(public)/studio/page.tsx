@@ -62,45 +62,50 @@ export default function StudioPage() {
           </h2>
           
           <div className="grid md:grid-cols-2 gap-8">
-            <div className="bg-white rounded-lg p-8 shadow-sm">
-              <h3 className="text-xl font-semibold text-tempo-bordeaux mb-4">
-                Salle principale
-              </h3>
-              <p className="text-muted-foreground mb-4">
-                Un espace lumineux de 80m² pouvant accueillir jusqu'à 14 personnes. 
-                Parquet en bois, lumière naturelle et équipement premium pour vos 
-                cours de yoga et pilates mat.
-              </p>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Tapis et accessoires fournis</li>
-                <li>• Vestiaires</li>
-                <li>• Coin tisane</li>
-              </ul>
+            <div className="bg-white rounded-lg overflow-hidden shadow-sm">
+              <img 
+                src="/espace-1.jpg" 
+                alt="Équipement Tempo - Tapis et accessoires"
+                className="w-full h-56 object-cover"
+              />
+              <div className="p-8">
+                <h3 className="text-xl font-semibold text-tempo-bordeaux mb-4">
+                  Salle principale
+                </h3>
+                <p className="text-muted-foreground mb-4">
+                  Un espace lumineux de 80m² pouvant accueillir jusqu'à 14 personnes. 
+                  Parquet en bois, lumière naturelle et équipement premium pour vos 
+                  cours de yoga et pilates mat.
+                </p>
+                <ul className="text-sm text-muted-foreground space-y-1">
+                  <li>• Tapis et accessoires fournis</li>
+                  <li>• Vestiaires</li>
+                  <li>• Coin tisane</li>
+                </ul>
+              </div>
             </div>
             
-            <div className="bg-white rounded-lg p-8 shadow-sm">
-              <h3 className="text-xl font-semibold text-tempo-bordeaux mb-4">
-                Espace détente
-              </h3>
-              <p className="text-muted-foreground mb-4">
-                Un coin cosy pour vous accueillir avant et après vos cours.
-                Profitez d un moment de calme dans une ambiance chaleureuse.
-              </p>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Coin tisane et infusions</li>
-                <li>• Vestiaires</li>
-                <li>• Casiers sécurisés</li>
-              </ul>
+            <div className="bg-white rounded-lg overflow-hidden shadow-sm">
+              <img 
+                src="/espace-2.jpg" 
+                alt="Espace détente Tempo"
+                className="w-full h-56 object-cover"
+              />
+              <div className="p-8">
+                <h3 className="text-xl font-semibold text-tempo-bordeaux mb-4">
+                  Espace détente
+                </h3>
+                <p className="text-muted-foreground mb-4">
+                  Un coin cosy pour vous accueillir avant et après vos cours.
+                  Profitez d un moment de calme dans une ambiance chaleureuse.
+                </p>
+                <ul className="text-sm text-muted-foreground space-y-1">
+                  <li>• Coin tisane et infusions</li>
+                  <li>• Vestiaires</li>
+                  <li>• Casiers sécurisés</li>
+                </ul>
+              </div>
             </div>
-          </div>
-          
-          {/* Équipement */}
-          <div className="mt-12 rounded-lg overflow-hidden shadow-sm">
-            <img 
-              src="/studio-equipment.png" 
-              alt="Équipement Tempo - Tapis et accessoires pilates"
-              className="w-full h-80 object-cover"
-            />
           </div>
         </div>
       </section>

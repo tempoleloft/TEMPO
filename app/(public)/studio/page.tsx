@@ -93,6 +93,15 @@ export default function StudioPage() {
               </ul>
             </div>
           </div>
+          
+          {/* Équipement */}
+          <div className="mt-12 rounded-lg overflow-hidden shadow-sm">
+            <img 
+              src="/studio-equipment.png" 
+              alt="Équipement Tempo - Tapis et accessoires pilates"
+              className="w-full h-80 object-cover"
+            />
+          </div>
         </div>
       </section>
 

@@ -128,6 +128,10 @@ export default function StudioPage() {
                     75004 Paris<br />
                     Métro Rambuteau (ligne 11)
                   </p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Sous le porche, 1ère porte en bois à gauche<br />
+                    2ème étage
+                  </p>
                 </div>
               </div>
               

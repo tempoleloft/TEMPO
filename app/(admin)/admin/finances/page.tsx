@@ -28,7 +28,7 @@ export default async function FinancesPage() {
   let teachers: any[] = []
   try {
     teachers = await db.teacherProfile.findMany({
-      where: { active: true },
+      where: { isActive: true },
       include: {
         sessions: {
           where: {

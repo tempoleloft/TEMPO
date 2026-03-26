@@ -5,6 +5,7 @@ import { format } from "date-fns"
 import { fr } from "date-fns/locale"
 import { Wallet, TrendingUp, Users, Download } from "lucide-react"
 import { ExportButton } from "@/components/admin/export-button"
+import { TeacherStats } from "@/components/admin/teacher-stats"
 
 export const dynamic = 'force-dynamic'
 
@@ -21,6 +22,31 @@ export default async function FinancesPage() {
       product: true,
     },
     orderBy: { createdAt: "desc" },
+  })
+
+  // Get all teachers with their sessions (only past sessions with COMPLETED status or past scheduled)
+  const teachers = await db.teacherProfile.findMany({
+    where: { active: true },
+    include: {
+      sessions: {
+        where: {
+          startAt: { lte: new Date() },
+          status: { in: ["SCHEDULED", "COMPLETED"] },
+        },
+        include: {
+          classType: true,
+          _count: {
+            select: {
+              reservations: {
+                where: { status: "BOOKED" },
+              },
+            },
+          },
+        },
+        orderBy: { startAt: "desc" },
+      },
+    },
+    orderBy: { displayName: "asc" },
   })
 
   // Calculate stats
@@ -187,6 +213,9 @@ export default async function FinancesPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Teacher Stats */}
+      <TeacherStats teachers={teachers} />
     </div>
   )
 }

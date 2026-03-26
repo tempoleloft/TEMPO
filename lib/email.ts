@@ -724,6 +724,26 @@ export async function sendBookingConfirmationEmail(
                           </p>
                         </div>
                         
+                        <!-- Accès au studio -->
+                        <div style="background-color: #F9F8F6; border-radius: 12px; padding: 25px; margin-bottom: 25px;">
+                          <h3 style="margin: 0 0 15px 0; font-size: 18px; color: #42101B; font-weight: 600;">
+                            📍 Accès au studio
+                          </h3>
+                          <p style="margin: 0 0 10px 0; font-size: 15px; color: #42101B; font-weight: 500;">
+                            41 Rue du Temple, 75004 Paris
+                          </p>
+                          <p style="margin: 0 0 10px 0; font-size: 14px; color: #555;">
+                            Sous le porche, 1ère porte en bois à gauche<br>
+                            2ème étage – <strong>Code : 7842</strong>
+                          </p>
+                          <p style="margin: 0; font-size: 14px; color: #888;">
+                            Métro Rambuteau (ligne 11)
+                          </p>
+                          <p style="margin: 15px 0 0 0; font-size: 14px; color: #555;">
+                            📞 <a href="tel:0634396579" style="color: #42101B; text-decoration: none;">06 34 39 65 79</a>
+                          </p>
+                        </div>
+                        
                         <!-- Bouton CTA -->
                         <table width="100%" cellpadding="0" cellspacing="0">
                           <tr>

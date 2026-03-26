@@ -24,7 +24,7 @@ export default async function FinancesPage() {
     orderBy: { createdAt: "desc" },
   })
 
-  // Get all teachers with their sessions (only past sessions with COMPLETED status or past scheduled)
+  // Get all teachers with their sessions (only past sessions)
   const teachers = await db.teacherProfile.findMany({
     where: { active: true },
     include: {
@@ -35,12 +35,9 @@ export default async function FinancesPage() {
         },
         include: {
           classType: true,
-          _count: {
-            select: {
-              reservations: {
-                where: { status: "BOOKED" },
-              },
-            },
+          reservations: {
+            where: { status: "BOOKED" },
+            select: { id: true },
           },
         },
         orderBy: { startAt: "desc" },

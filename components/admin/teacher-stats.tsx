@@ -25,7 +25,7 @@ type Session = {
   startAt: Date
   endAt: Date
   classType: { title: string }
-  _count: { reservations: number }
+  reservations: { id: string }[]
 }
 
 type TeacherWithSessions = Teacher & {
@@ -60,7 +60,7 @@ export function TeacherStats({ teachers }: Props) {
   // Calculate totals
   const totalSessions = sortedSessions.length
   const totalParticipants = sortedSessions.reduce(
-    (sum, s) => sum + s._count.reservations,
+    (sum, s) => sum + s.reservations.length,
     0
   )
 
@@ -83,7 +83,7 @@ export function TeacherStats({ teachers }: Props) {
       format(new Date(session.startAt), "dd/MM/yyyy"),
       format(new Date(session.startAt), "HH:mm") + " - " + format(new Date(session.endAt), "HH:mm"),
       session.classType.title,
-      session._count.reservations.toString(),
+      session.reservations.length.toString(),
     ])
 
     // Add totals row
@@ -201,9 +201,9 @@ export function TeacherStats({ teachers }: Props) {
                           {session.classType.title}
                         </td>
                         <td className="py-3 text-center">
-                          <Badge variant={session._count.reservations > 0 ? "default" : "secondary"}>
+                          <Badge variant={session.reservations.length > 0 ? "default" : "secondary"}>
                             <Users className="h-3 w-3 mr-1" />
-                            {session._count.reservations}
+                            {session.reservations.length}
                           </Badge>
                         </td>
                       </tr>

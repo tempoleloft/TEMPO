@@ -18,9 +18,7 @@ export default async function Home() {
       ? classTypes
       : [
           { id: "fallback-vinyasa", title: "Yoga Vinyasa", description: "Flow dynamique" },
-          { id: "fallback-hatha", title: "Yoga Hatha", description: "Douceur & précision" },
           { id: "fallback-pilates", title: "Pilates Mat", description: "Renforcement profond" },
-          { id: "fallback-barre", title: "Barre au Sol", description: "Grâce & maintien" },
         ]
   const isLoggedIn = !!session?.user
   const userName = session?.user?.name || session?.user?.email?.split("@")[0]
@@ -116,7 +114,7 @@ export default async function Home() {
           
           <p className="text-base sm:text-lg md:text-xl opacity-80 max-w-2xl mx-auto leading-relaxed">
             Un studio où le mouvement rencontre le calme. 
-            Yoga Vinyasa, Hatha, Pilates Mat et Barre au Sol 
+            Yoga Vinyasa et Pilates Mat 
             dans un loft chaleureux au cœur du Marais.
           </p>
           

@@ -25,26 +25,30 @@ export default async function FinancesPage() {
   })
 
   // Get all teachers with their sessions (only past sessions)
-  const teachers = await db.teacherProfile.findMany({
-    where: { active: true },
-    include: {
-      sessions: {
-        where: {
-          startAt: { lte: new Date() },
-          status: { in: ["SCHEDULED", "COMPLETED"] },
-        },
-        include: {
-          classType: true,
-          reservations: {
-            where: { status: "BOOKED" },
-            select: { id: true },
+  let teachers: any[] = []
+  try {
+    teachers = await db.teacherProfile.findMany({
+      where: { active: true },
+      include: {
+        sessions: {
+          where: {
+            startAt: { lte: new Date() },
           },
+          include: {
+            classType: true,
+            reservations: {
+              where: { status: "BOOKED" },
+              select: { id: true },
+            },
+          },
+          orderBy: { startAt: "desc" },
         },
-        orderBy: { startAt: "desc" },
       },
-    },
-    orderBy: { displayName: "asc" },
-  })
+      orderBy: { displayName: "asc" },
+    })
+  } catch (e) {
+    console.error("Error fetching teachers:", e)
+  }
 
   // Calculate stats
   const totalRevenue = purchases.reduce((sum, p) => sum + p.amountCents, 0)

@@ -27,6 +27,7 @@ export function AddGuestDialog({ reservationId, sessionName, userCredits }: Prop
   const [open, setOpen] = useState(false)
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
+  const [email, setEmail] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const router = useRouter()
@@ -40,14 +41,20 @@ export function AddGuestDialog({ reservationId, sessionName, userCredits }: Prop
       return
     }
 
+    if (email.trim() && !email.includes("@")) {
+      setError("Veuillez entrer une adresse email valide")
+      return
+    }
+
     setIsLoading(true)
 
-    const result = await addGuestToReservation(reservationId, firstName.trim(), lastName.trim())
+    const result = await addGuestToReservation(reservationId, firstName.trim(), lastName.trim(), email.trim() || undefined)
 
     if (result.success) {
       setOpen(false)
       setFirstName("")
       setLastName("")
+      setEmail("")
       router.refresh()
     } else {
       setError(result.error || "Une erreur est survenue")
@@ -101,6 +108,20 @@ export function AddGuestDialog({ reservationId, sessionName, userCredits }: Prop
                 placeholder="Nom"
                 disabled={isLoading}
               />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="email">Email de l'invité (optionnel)</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="email@exemple.com"
+                disabled={isLoading}
+              />
+              <p className="text-xs text-muted-foreground">
+                Un email de confirmation sera envoyé à cette adresse
+              </p>
             </div>
             {error && (
               <p className="text-sm text-red-600">{error}</p>

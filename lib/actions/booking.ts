@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { revalidatePath } from "next/cache"
 import { notifyNextInWaitlist } from "./waitlist"
-import { sendBookingConfirmationEmail } from "@/lib/email"
+import { sendBookingConfirmationEmail, sendGuestConfirmationEmail } from "@/lib/email"
 
 // Cancellation policy: 24 hours before class
 const CANCEL_HOURS_BEFORE = 24
@@ -250,7 +250,8 @@ export async function cancelBooking(sessionId: string) {
 export async function addGuestToReservation(
   reservationId: string,
   guestFirstName: string,
-  guestLastName: string
+  guestLastName: string,
+  guestEmail?: string
 ) {
   const session = await auth()
   
@@ -266,8 +267,18 @@ export async function addGuestToReservation(
       const reservation = await tx.reservation.findUnique({
         where: { id: reservationId },
         include: {
-          session: true,
+          session: {
+            include: {
+              classType: true,
+              teacher: true,
+            },
+          },
           guestReservations: true,
+          user: {
+            include: {
+              clientProfile: true,
+            },
+          },
         },
       })
 
@@ -346,17 +357,40 @@ export async function addGuestToReservation(
           reservationId,
           guestFirstName: guestFirstName.trim(),
           guestLastName: guestLastName.trim(),
+          guestEmail: guestEmail || null,
           creditLedgerId: ledgerEntry.id,
         },
       })
 
-      return { success: true }
+      // Récupérer le nom de l'inviteur
+      const inviterName = reservation.user.clientProfile
+        ? `${reservation.user.clientProfile.firstName} ${reservation.user.clientProfile.lastName}`
+        : reservation.user.name || "Un ami"
+
+      return { 
+        success: true,
+        emailData: guestEmail ? {
+          guestEmail,
+          guestFirstName: guestFirstName.trim(),
+          className: reservation.session.classType?.title || "Cours",
+          teacherName: reservation.session.teacher?.displayName || "Professeur",
+          classDate: reservation.session.startAt,
+          inviterName,
+        } : null,
+      }
     })
+
+    // Envoyer l'email de confirmation à l'invité (hors transaction)
+    if (result.success && result.emailData) {
+      const { guestEmail, guestFirstName, className, teacherName, classDate, inviterName } = result.emailData
+      sendGuestConfirmationEmail(guestEmail, guestFirstName, className, teacherName, classDate, inviterName)
+        .catch(err => console.error("Failed to send guest confirmation email:", err))
+    }
 
     revalidatePath("/app/planning")
     revalidatePath("/app")
     revalidatePath("/app/reservations")
-    return result
+    return { success: result.success }
   } catch (error) {
     console.error("Add guest error:", error)
     return {

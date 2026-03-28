@@ -365,6 +365,7 @@ export default async function AdminClientDetailPage({ params }: PageProps) {
                   <thead>
                     <tr className="border-b text-left text-muted-foreground">
                       <th className="pb-2 font-medium">Invité</th>
+                      <th className="pb-2 font-medium hidden md:table-cell">Email</th>
                       <th className="pb-2 font-medium">Cours</th>
                       <th className="pb-2 font-medium hidden sm:table-cell">Date</th>
                     </tr>
@@ -374,6 +375,9 @@ export default async function AdminClientDetailPage({ params }: PageProps) {
                       <tr key={guest.id} className="hover:bg-muted/50">
                         <td className="py-2 font-medium">
                           {guest.guestFirstName} {guest.guestLastName}
+                        </td>
+                        <td className="py-2 hidden md:table-cell text-muted-foreground">
+                          {guest.guestEmail || "-"}
                         </td>
                         <td className="py-2">
                           {guest.session.classType.title}

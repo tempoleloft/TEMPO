@@ -790,3 +790,164 @@ export async function sendBookingConfirmationEmail(
     return { success: false, error: "Erreur lors de l'envoi de l'email" }
   }
 }
+
+export async function sendGuestConfirmationEmail(
+  email: string,
+  guestFirstName: string,
+  className: string,
+  teacherName: string,
+  classDate: Date,
+  inviterName: string
+) {
+  const formattedDate = classDate.toLocaleDateString("fr-FR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  })
+  const formattedTime = classDate.toLocaleTimeString("fr-FR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  })
+
+  try {
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to: email,
+      subject: `🎉 Vous êtes invité(e) au cours ${className} !`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          </head>
+          <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #F2F1ED;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #F2F1ED; padding: 40px 20px;">
+              <tr>
+                <td align="center">
+                  <table width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    
+                    <!-- Header bordeaux avec logo -->
+                    <tr>
+                      <td style="background-color: #42101B; padding: 40px 40px 30px 40px; text-align: center;">
+                        <img src="${BASE_URL}/logo-email.png" alt="TEMPO Le Loft" width="220" style="max-width: 220px; height: auto;">
+                      </td>
+                    </tr>
+                    
+                    <!-- Contenu principal -->
+                    <tr>
+                      <td style="padding: 50px 40px;">
+                        <div style="text-align: center; margin-bottom: 30px;">
+                          <div style="display: inline-block; background-color: #FEF3C7; border-radius: 50%; padding: 15px;">
+                            <span style="font-size: 32px;">🎉</span>
+                          </div>
+                        </div>
+                        
+                        <h2 style="margin: 0 0 20px 0; font-size: 24px; color: #42101B; font-weight: 600; text-align: center;">
+                          Vous êtes invité(e) !
+                        </h2>
+                        
+                        <p style="margin: 0 0 25px 0; font-size: 16px; color: #555; line-height: 1.6;">
+                          Bonjour ${guestFirstName},
+                        </p>
+                        
+                        <p style="margin: 0 0 25px 0; font-size: 16px; color: #555; line-height: 1.6;">
+                          <strong style="color: #42101B;">${inviterName}</strong> vous a invité(e) à l'accompagner pour un cours au studio Tempo – Le Loft. Nous avons hâte de vous accueillir !
+                        </p>
+                        
+                        <!-- Détails du cours -->
+                        <div style="background-color: #F9F8F6; border-radius: 12px; padding: 25px; margin-bottom: 25px;">
+                          <h3 style="margin: 0 0 20px 0; font-size: 18px; color: #42101B; font-weight: 600;">
+                            📅 Détails du cours
+                          </h3>
+                          <table cellpadding="0" cellspacing="0" width="100%">
+                            <tr>
+                              <td style="padding: 10px 0; border-bottom: 1px solid #eee;">
+                                <span style="color: #888; font-size: 14px;">Cours</span><br>
+                                <span style="color: #42101B; font-size: 16px; font-weight: 600;">${className}</span>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td style="padding: 10px 0; border-bottom: 1px solid #eee;">
+                                <span style="color: #888; font-size: 14px;">Professeur</span><br>
+                                <span style="color: #42101B; font-size: 16px; font-weight: 500;">${teacherName}</span>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td style="padding: 10px 0; border-bottom: 1px solid #eee;">
+                                <span style="color: #888; font-size: 14px;">Date</span><br>
+                                <span style="color: #42101B; font-size: 16px; font-weight: 500;">${formattedDate}</span>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td style="padding: 10px 0;">
+                                <span style="color: #888; font-size: 14px;">Heure</span><br>
+                                <span style="color: #42101B; font-size: 16px; font-weight: 500;">${formattedTime}</span>
+                              </td>
+                            </tr>
+                          </table>
+                        </div>
+                        
+                        <!-- Accès au studio -->
+                        <div style="background-color: #F9F8F6; border-radius: 12px; padding: 25px; margin-bottom: 25px;">
+                          <h3 style="margin: 0 0 15px 0; font-size: 18px; color: #42101B; font-weight: 600;">
+                            📍 Accès au studio
+                          </h3>
+                          <p style="margin: 0 0 10px 0; font-size: 15px; color: #42101B; font-weight: 500;">
+                            41 Rue du Temple, 75004 Paris
+                          </p>
+                          <p style="margin: 0 0 10px 0; font-size: 14px; color: #555;">
+                            Sous le porche, 1ère porte en bois à gauche<br>
+                            2ème étage – <strong>Code : 7842</strong>
+                          </p>
+                          <p style="margin: 0; font-size: 14px; color: #888;">
+                            Métro Rambuteau (ligne 11)
+                          </p>
+                          <p style="margin: 15px 0 0 0; font-size: 14px; color: #555;">
+                            📞 <a href="tel:0634396579" style="color: #42101B; text-decoration: none;">06 34 39 65 79</a>
+                          </p>
+                        </div>
+                        
+                        <!-- Info pratique -->
+                        <div style="background-color: #E0F2FE; border-radius: 12px; padding: 20px; margin-bottom: 25px; border-left: 4px solid #0EA5E9;">
+                          <p style="margin: 0; font-size: 14px; color: #0369A1;">
+                            <strong>💡 Bon à savoir :</strong> Nous fournissons tapis et accessoires. Venez simplement avec une tenue confortable !
+                          </p>
+                        </div>
+                        
+                        <p style="margin: 0; font-size: 14px; color: #666; line-height: 1.6; text-align: center;">
+                          À très bientôt au studio ! 🙏
+                        </p>
+                      </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                      <td style="background-color: #F9F8F6; padding: 30px 40px; text-align: center; border-top: 1px solid #eee;">
+                        <p style="margin: 0 0 10px 0; font-size: 14px; font-weight: 600; color: #42101B;">Tempo – Le Loft</p>
+                        <p style="margin: 0 0 5px 0; font-size: 13px; color: #888;">41 Rue du Temple, 75004 Paris</p>
+                        <p style="margin: 0 0 15px 0; font-size: 13px; color: #888;">
+                          <a href="mailto:contact@tempoleloft.com" style="color: #42101B; text-decoration: none;">contact@tempoleloft.com</a>
+                        </p>
+                        <a href="https://www.instagram.com/tempo_leloft/" style="display: inline-block; text-decoration: none;">
+                          <img src="https://cdn-icons-png.flaticon.com/512/174/174855.png" alt="Instagram" width="28" height="28" style="border-radius: 6px;">
+                        </a>
+                      </td>
+                    </tr>
+                    
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </body>
+        </html>
+      `,
+    })
+    
+    return { success: true }
+  } catch (error) {
+    console.error("Guest confirmation email error:", error)
+    return { success: false, error: "Erreur lors de l'envoi de l'email" }
+  }
+}

@@ -32,6 +32,7 @@ export default async function AdminSessionPage({ params }: PageProps) {
               wallet: true,
             },
           },
+          guestReservations: true,
         },
         orderBy: { bookedAt: "asc" },
       },
@@ -46,7 +47,13 @@ export default async function AdminSessionPage({ params }: PageProps) {
   const bookedReservations = session.reservations.filter(r => r.status === "BOOKED")
   const attendedReservations = session.reservations.filter(r => r.status === "ATTENDED")
   const noShowReservations = session.reservations.filter(r => r.status === "NO_SHOW")
-  const totalParticipants = allActiveReservations.length
+  
+  // Count guests
+  const allGuests = session.reservations.flatMap(r => r.guestReservations || [])
+  const totalGuests = allGuests.length
+  
+  // Total = reservations + guests
+  const totalParticipants = allActiveReservations.length + totalGuests
   const spotsLeft = session.capacity - totalParticipants
   const isPastOrToday = session.startAt <= new Date()
 
@@ -149,7 +156,7 @@ export default async function AdminSessionPage({ params }: PageProps) {
               <div>
                 <p className="text-sm text-muted-foreground">Places</p>
                 <p className="font-semibold">
-                  {bookedReservations.length}/{session.capacity}
+                  {totalParticipants}/{session.capacity}
                   {spotsLeft > 0 && (
                     <span className="text-muted-foreground font-normal"> ({spotsLeft} restantes)</span>
                   )}
@@ -199,88 +206,142 @@ export default async function AdminSessionPage({ params }: PageProps) {
             </div>
           ) : (
             <div className="space-y-3">
-              {allActiveReservations.map((reservation, index) => {
-                const statusColors = {
-                  BOOKED: "bg-gray-50",
-                  ATTENDED: "bg-green-50 border-l-4 border-green-500",
-                  NO_SHOW: "bg-red-50 border-l-4 border-red-500",
-                }
-                
-                return (
-                  <div
-                    key={reservation.id}
-                    className={`flex items-center justify-between p-4 rounded-lg ${statusColors[reservation.status as keyof typeof statusColors] || "bg-tempo-taupe/10"}`}
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
-                        reservation.status === "ATTENDED"
-                          ? "bg-green-600 text-white"
-                          : reservation.status === "NO_SHOW"
-                          ? "bg-red-600 text-white"
-                          : "bg-tempo-bordeaux text-tempo-creme"
-                      }`}>
-                        {reservation.status === "ATTENDED" ? (
-                          <Check className="h-4 w-4" />
-                        ) : reservation.status === "NO_SHOW" ? (
-                          <X className="h-4 w-4" />
-                        ) : (
-                          index + 1
-                        )}
-                      </div>
-                      <div>
-                        <p className="font-semibold">
-                          {reservation.user.clientProfile?.firstName}{" "}
-                          {reservation.user.clientProfile?.lastName}
-                        </p>
-                        <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                          <span>{reservation.user.email}</span>
-                          {reservation.user.clientProfile?.phone && (
-                            <span className="flex items-center gap-1">
-                              <Phone className="h-3 w-3" />
-                              {reservation.user.clientProfile.phone}
-                            </span>
+              {(() => {
+                let participantIndex = 0
+                return allActiveReservations.flatMap((reservation) => {
+                  const statusColors = {
+                    BOOKED: "bg-gray-50",
+                    ATTENDED: "bg-green-50 border-l-4 border-green-500",
+                    NO_SHOW: "bg-red-50 border-l-4 border-red-500",
+                  }
+                  
+                  const elements = []
+                  participantIndex++
+                  const currentIndex = participantIndex
+                  
+                  // Main reservation
+                  elements.push(
+                    <div
+                      key={reservation.id}
+                      className={`flex items-center justify-between p-4 rounded-lg ${statusColors[reservation.status as keyof typeof statusColors] || "bg-tempo-taupe/10"}`}
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
+                          reservation.status === "ATTENDED"
+                            ? "bg-green-600 text-white"
+                            : reservation.status === "NO_SHOW"
+                            ? "bg-red-600 text-white"
+                            : "bg-tempo-bordeaux text-tempo-creme"
+                        }`}>
+                          {reservation.status === "ATTENDED" ? (
+                            <Check className="h-4 w-4" />
+                          ) : reservation.status === "NO_SHOW" ? (
+                            <X className="h-4 w-4" />
+                          ) : (
+                            currentIndex
                           )}
                         </div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-4">
-                      <div className="text-right text-sm">
-                        <p className="text-muted-foreground">Crédits</p>
-                        <p className="font-semibold">{reservation.user.wallet?.creditsBalance || 0}</p>
+                        <div>
+                          <p className="font-semibold">
+                            {reservation.user.clientProfile?.firstName}{" "}
+                            {reservation.user.clientProfile?.lastName}
+                            {reservation.guestReservations && reservation.guestReservations.length > 0 && (
+                              <Badge variant="secondary" className="ml-2 text-xs">
+                                +{reservation.guestReservations.length} invité{reservation.guestReservations.length > 1 ? "s" : ""}
+                              </Badge>
+                            )}
+                          </p>
+                          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                            <span>{reservation.user.email}</span>
+                            {reservation.user.clientProfile?.phone && (
+                              <span className="flex items-center gap-1">
+                                <Phone className="h-3 w-3" />
+                                {reservation.user.clientProfile.phone}
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </div>
                       
-                      {isPastOrToday ? (
-                        <AttendanceButtons
-                          reservationId={reservation.id}
-                          currentStatus={reservation.status as "BOOKED" | "ATTENDED" | "NO_SHOW"}
-                        />
-                      ) : (
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-green-600 border-green-200"
-                            disabled
-                          >
-                            <Check className="h-4 w-4 mr-1" />
-                            Présent
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-red-600 border-red-200"
-                            disabled
-                          >
-                            <X className="h-4 w-4 mr-1" />
-                            No-show
-                          </Button>
+                      <div className="flex items-center gap-4">
+                        <div className="text-right text-sm">
+                          <p className="text-muted-foreground">Crédits</p>
+                          <p className="font-semibold">{reservation.user.wallet?.creditsBalance || 0}</p>
                         </div>
-                      )}
+                        
+                        {isPastOrToday ? (
+                          <AttendanceButtons
+                            reservationId={reservation.id}
+                            currentStatus={reservation.status as "BOOKED" | "ATTENDED" | "NO_SHOW"}
+                          />
+                        ) : (
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-green-600 border-green-200"
+                              disabled
+                            >
+                              <Check className="h-4 w-4 mr-1" />
+                              Présent
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-red-600 border-red-200"
+                              disabled
+                            >
+                              <X className="h-4 w-4 mr-1" />
+                              No-show
+                            </Button>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )
-              })}
+                  )
+                  
+                  // Guest reservations
+                  if (reservation.guestReservations) {
+                    reservation.guestReservations.forEach((guest) => {
+                      participantIndex++
+                      const guestIndex = participantIndex
+                      elements.push(
+                        <div
+                          key={guest.id}
+                          className="flex items-center justify-between p-4 rounded-lg bg-blue-50 border-l-4 border-blue-400 ml-8"
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold bg-blue-500 text-white">
+                              {guestIndex}
+                            </div>
+                            <div>
+                              <p className="font-semibold flex items-center gap-2">
+                                {guest.guestFirstName} {guest.guestLastName}
+                                <Badge variant="outline" className="text-xs border-blue-400 text-blue-600">
+                                  Invité +1
+                                </Badge>
+                              </p>
+                              <div className="text-sm text-muted-foreground">
+                                {guest.guestEmail ? (
+                                  <span>{guest.guestEmail}</span>
+                                ) : (
+                                  <span className="italic">Pas d&apos;email</span>
+                                )}
+                                <span className="mx-2">•</span>
+                                <span>
+                                  Invité par {reservation.user.clientProfile?.firstName} {reservation.user.clientProfile?.lastName}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })
+                  }
+                  
+                  return elements
+                })
+              })()}
             </div>
           )}
         </CardContent>

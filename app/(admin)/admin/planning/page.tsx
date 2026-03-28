@@ -32,11 +32,10 @@ export default async function AdminPlanningPage({ searchParams }: PageProps) {
       teacher: {
         select: { displayName: true },
       },
-      _count: {
-        select: {
-          reservations: {
-            where: { status: "BOOKED" },
-          },
+      reservations: {
+        where: { status: "BOOKED" },
+        include: {
+          guestReservations: true,
         },
       },
     },
@@ -114,8 +113,13 @@ export default async function AdminPlanningPage({ searchParams }: PageProps) {
             ) : (
               <div className="divide-y">
                 {sessions.map((session) => {
-                  const spotsLeft = session.capacity - session._count.reservations
-                  const fillRate = (session._count.reservations / session.capacity) * 100
+                  const guestCount = session.reservations.reduce(
+                    (acc, r) => acc + (r.guestReservations?.length || 0),
+                    0
+                  )
+                  const totalBooked = session.reservations.length + guestCount
+                  const spotsLeft = session.capacity - totalBooked
+                  const fillRate = (totalBooked / session.capacity) * 100
                   
                   return (
                     <Link
@@ -175,7 +179,7 @@ export default async function AdminPlanningPage({ searchParams }: PageProps) {
                           }
                           className="min-w-[50px] sm:min-w-[60px] justify-center shrink-0"
                         >
-                          {session._count.reservations}/{session.capacity}
+                          {totalBooked}/{session.capacity}
                         </Badge>
                       </div>
                     </Link>

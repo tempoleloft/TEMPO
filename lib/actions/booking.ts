@@ -246,3 +246,198 @@ export async function cancelBooking(sessionId: string) {
     }
   }
 }
+
+export async function addGuestToReservation(
+  reservationId: string,
+  guestFirstName: string,
+  guestLastName: string
+) {
+  const session = await auth()
+  
+  if (!session?.user) {
+    return { success: false, error: "Non authentifié" }
+  }
+
+  const userId = session.user.id
+
+  try {
+    const result = await db.$transaction(async (tx) => {
+      // 1. Vérifier que la réservation existe et appartient à l'utilisateur
+      const reservation = await tx.reservation.findUnique({
+        where: { id: reservationId },
+        include: {
+          session: true,
+          guestReservations: true,
+        },
+      })
+
+      if (!reservation) {
+        throw new Error("Réservation non trouvée")
+      }
+
+      if (reservation.userId !== userId) {
+        throw new Error("Cette réservation ne vous appartient pas")
+      }
+
+      if (reservation.status !== "BOOKED") {
+        throw new Error("Cette réservation n'est plus active")
+      }
+
+      // 2. Vérifier que le cours n'est pas passé
+      if (reservation.session.startAt < new Date()) {
+        throw new Error("Ce cours est déjà passé")
+      }
+
+      // 3. Vérifier qu'il reste de la place
+      const bookedCount = await tx.reservation.count({
+        where: {
+          sessionId: reservation.sessionId,
+          status: "BOOKED",
+        },
+      })
+
+      const guestCount = await tx.guestReservation.count({
+        where: {
+          reservation: {
+            sessionId: reservation.sessionId,
+            status: "BOOKED",
+          },
+        },
+      })
+
+      const totalBooked = bookedCount + guestCount
+
+      if (totalBooked >= reservation.session.capacity) {
+        throw new Error("Ce cours est complet")
+      }
+
+      // 4. Vérifier le wallet de l'utilisateur
+      const wallet = await tx.wallet.findUnique({
+        where: { userId },
+      })
+
+      if (!wallet || wallet.creditsBalance < 1) {
+        throw new Error("Vous n'avez pas assez de crédits")
+      }
+
+      // 5. Créer l'entrée du ledger
+      const ledgerEntry = await tx.creditLedger.create({
+        data: {
+          userId,
+          delta: -1,
+          reason: "BOOKING",
+          refType: "GuestReservation",
+          refId: reservationId,
+          notes: `Invité: ${guestFirstName} ${guestLastName}`,
+        },
+      })
+
+      // 6. Décrémenter le wallet
+      await tx.wallet.update({
+        where: { userId },
+        data: {
+          creditsBalance: { decrement: 1 },
+        },
+      })
+
+      // 7. Créer la réservation invité
+      await tx.guestReservation.create({
+        data: {
+          reservationId,
+          guestFirstName: guestFirstName.trim(),
+          guestLastName: guestLastName.trim(),
+          creditLedgerId: ledgerEntry.id,
+        },
+      })
+
+      return { success: true }
+    })
+
+    revalidatePath("/app/planning")
+    revalidatePath("/app")
+    revalidatePath("/app/reservations")
+    return result
+  } catch (error) {
+    console.error("Add guest error:", error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Erreur lors de l'ajout de l'invité",
+    }
+  }
+}
+
+export async function cancelGuestReservation(guestReservationId: string) {
+  const session = await auth()
+  
+  if (!session?.user) {
+    return { success: false, error: "Non authentifié" }
+  }
+
+  const userId = session.user.id
+
+  try {
+    const result = await db.$transaction(async (tx) => {
+      // 1. Récupérer la réservation invité
+      const guestReservation = await tx.guestReservation.findUnique({
+        where: { id: guestReservationId },
+        include: {
+          reservation: {
+            include: { session: true },
+          },
+        },
+      })
+
+      if (!guestReservation) {
+        throw new Error("Réservation invité non trouvée")
+      }
+
+      if (guestReservation.reservation.userId !== userId) {
+        throw new Error("Cette réservation ne vous appartient pas")
+      }
+
+      // 2. Vérifier la politique d'annulation (24h avant)
+      const hoursUntilStart = (guestReservation.reservation.session.startAt.getTime() - Date.now()) / (1000 * 60 * 60)
+
+      if (hoursUntilStart < CANCEL_HOURS_BEFORE) {
+        throw new Error(`Annulation impossible moins de ${CANCEL_HOURS_BEFORE}h avant le cours`)
+      }
+
+      // 3. Supprimer la réservation invité
+      await tx.guestReservation.delete({
+        where: { id: guestReservationId },
+      })
+
+      // 4. Rembourser le crédit
+      await tx.creditLedger.create({
+        data: {
+          userId,
+          delta: 1,
+          reason: "CANCEL_REFUND",
+          refType: "GuestReservation",
+          refId: guestReservationId,
+          notes: `Annulation invité: ${guestReservation.guestFirstName} ${guestReservation.guestLastName}`,
+        },
+      })
+
+      await tx.wallet.update({
+        where: { userId },
+        data: {
+          creditsBalance: { increment: 1 },
+        },
+      })
+
+      return { success: true }
+    })
+
+    revalidatePath("/app/planning")
+    revalidatePath("/app")
+    revalidatePath("/app/reservations")
+    return result
+  } catch (error) {
+    console.error("Cancel guest error:", error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Erreur lors de l'annulation",
+    }
+  }
+}

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Clock, User, MapPin } from "lucide-react"
 import { BookingButton } from "@/components/booking/booking-button"
+import { AddGuestDialog } from "@/components/add-guest-dialog"
 
 interface PageProps {
   searchParams: { week?: string }
@@ -43,6 +44,9 @@ export default async function ClientPlanningPage({ searchParams }: PageProps) {
         teacher: true,
         reservations: {
           where: { status: "BOOKED" },
+          include: {
+            guestReservations: true,
+          },
         },
         waitlist: {
           where: { status: "WAITING" },
@@ -62,7 +66,9 @@ export default async function ClientPlanningPage({ searchParams }: PageProps) {
           startAt: { gte: weekStart, lte: weekEnd },
         },
       },
-      select: { sessionId: true },
+      include: {
+        guestReservations: true,
+      },
     }),
     db.waitlistEntry.findMany({
       where: {
@@ -76,6 +82,8 @@ export default async function ClientPlanningPage({ searchParams }: PageProps) {
     }),
   ])
 
+  // Map reservations by sessionId for easy lookup
+  const userReservationMap = new Map(userReservations.map((r) => [r.sessionId, r]))
   const reservedSessionIds = new Set(userReservations.map((r) => r.sessionId))
   const waitlistMap = new Map(userWaitlist.map((w) => [w.sessionId, w.position]))
 
@@ -153,14 +161,22 @@ export default async function ClientPlanningPage({ searchParams }: PageProps) {
             ) : (
               <div className="divide-y">
                 {sessions.map((classSession) => {
-                  const spotsLeft = classSession.capacity - classSession.reservations.length
+                  // Count all participants: reservations + guests
+                  const guestCount = classSession.reservations.reduce(
+                    (acc, r) => acc + (r.guestReservations?.length || 0),
+                    0
+                  )
+                  const totalBooked = classSession.reservations.length + guestCount
+                  const spotsLeft = classSession.capacity - totalBooked
                   const isFull = spotsLeft <= 0
                   const isBooked = reservedSessionIds.has(classSession.id)
+                  const userReservation = userReservationMap.get(classSession.id)
+                  const userGuestCount = userReservation?.guestReservations?.length || 0
                   const isPast = classSession.startAt < now
                   const isOnWaitlist = waitlistMap.has(classSession.id)
                   const waitlistPosition = waitlistMap.get(classSession.id)
                   const hoursUntilClass = (classSession.startAt.getTime() - now.getTime()) / (1000 * 60 * 60)
-                  const canCancel = hoursUntilClass >= 12
+                  const canCancel = hoursUntilClass >= 24
                   const waitlistCount = classSession.waitlist.length
                   
                   return (
@@ -180,6 +196,11 @@ export default async function ClientPlanningPage({ searchParams }: PageProps) {
                             <span className="truncate">{classSession.classType.title}</span>
                             {isBooked && (
                               <Badge className="bg-green-600 text-xs">Réservé</Badge>
+                            )}
+                            {userGuestCount > 0 && (
+                              <Badge variant="outline" className="text-xs border-tempo-bordeaux text-tempo-bordeaux">
+                                +{userGuestCount} invité{userGuestCount > 1 ? "s" : ""}
+                              </Badge>
                             )}
                             {isOnWaitlist && (
                               <Badge className="bg-amber-500 text-xs">Attente #{waitlistPosition}</Badge>
@@ -225,16 +246,27 @@ export default async function ClientPlanningPage({ searchParams }: PageProps) {
                           </Badge>
                         )}
                         
-                        <BookingButton
-                          sessionId={classSession.id}
-                          isBooked={isBooked}
-                          isFull={isFull}
-                          isPast={isPast}
-                          hasCredits={(wallet?.creditsBalance || 0) > 0}
-                          isOnWaitlist={isOnWaitlist}
-                          waitlistPosition={waitlistPosition}
-                          canCancel={canCancel}
-                        />
+                        <div className="flex items-center gap-2">
+                          <BookingButton
+                            sessionId={classSession.id}
+                            isBooked={isBooked}
+                            isFull={isFull}
+                            isPast={isPast}
+                            hasCredits={(wallet?.creditsBalance || 0) > 0}
+                            isOnWaitlist={isOnWaitlist}
+                            waitlistPosition={waitlistPosition}
+                            canCancel={canCancel}
+                          />
+                          
+                          {/* Bouton +1 pour ajouter un invité */}
+                          {isBooked && !isPast && spotsLeft > 0 && userReservation && (
+                            <AddGuestDialog
+                              reservationId={userReservation.id}
+                              sessionName={classSession.classType.title}
+                              userCredits={wallet?.creditsBalance || 0}
+                            />
+                          )}
+                        </div>
                       </div>
                     </div>
                   )

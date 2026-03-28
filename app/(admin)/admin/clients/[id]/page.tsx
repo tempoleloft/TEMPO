@@ -9,7 +9,7 @@ import { format } from "date-fns"
 import { fr } from "date-fns/locale"
 import { 
   User, Mail, Phone, Calendar, CreditCard, 
-  ShoppingBag, Clock, Ban, ArrowLeft 
+  ShoppingBag, Clock, Ban, ArrowLeft, Users 
 } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -41,6 +41,7 @@ export default async function AdminClientDetailPage({ params }: PageProps) {
               teacher: true,
             },
           },
+          guestReservations: true,
         },
         orderBy: { bookedAt: "desc" },
         take: 20,
@@ -338,6 +339,57 @@ export default async function AdminClientDetailPage({ params }: PageProps) {
           )}
         </CardContent>
       </Card>
+
+      {/* Guest History */}
+      {(() => {
+        const allGuests = client.reservations.flatMap(r => 
+          r.guestReservations.map(g => ({
+            ...g,
+            session: r.session,
+          }))
+        )
+        
+        if (allGuests.length === 0) return null
+        
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Invités (+1)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b text-left text-muted-foreground">
+                      <th className="pb-2 font-medium">Invité</th>
+                      <th className="pb-2 font-medium">Cours</th>
+                      <th className="pb-2 font-medium hidden sm:table-cell">Date</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {allGuests.map((guest) => (
+                      <tr key={guest.id} className="hover:bg-muted/50">
+                        <td className="py-2 font-medium">
+                          {guest.guestFirstName} {guest.guestLastName}
+                        </td>
+                        <td className="py-2">
+                          {guest.session.classType.title}
+                        </td>
+                        <td className="py-2 hidden sm:table-cell">
+                          {format(guest.session.startAt, "d MMM yyyy HH:mm", { locale: fr })}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        )
+      })()}
 
       {/* Credit History */}
       <Card>

@@ -273,14 +273,29 @@ model Reservation {
   createdAt                DateTime          @default(now())
   updatedAt                DateTime          @updatedAt
 
-  session      Session       @relation(fields: [sessionId], references: [id])
-  user         User          @relation(fields: [userId], references: [id])
-  creditLedger CreditLedger? @relation(fields: [creditLedgerId], references: [id])
+  session           Session            @relation(fields: [sessionId], references: [id])
+  user              User               @relation(fields: [userId], references: [id])
+  creditLedger      CreditLedger?      @relation(fields: [creditLedgerId], references: [id])
+  guestReservations GuestReservation[]
 
   @@unique([sessionId, userId]) // Prevent double booking
   @@index([userId])
   @@index([sessionId])
   @@index([status])
+}
+
+model GuestReservation {
+  id             String      @id @default(cuid())
+  reservationId  String
+  guestFirstName String
+  guestLastName  String
+  creditLedgerId String?     @unique
+  createdAt      DateTime    @default(now())
+
+  reservation  Reservation   @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  creditLedger CreditLedger? @relation(fields: [creditLedgerId], references: [id])
+
+  @@index([reservationId])
 }
 
 // ============================================================================
@@ -358,8 +373,9 @@ model CreditLedger {
   notes     String?
   createdAt DateTime     @default(now())
 
-  user        User         @relation(fields: [userId], references: [id])
-  reservation Reservation?
+  user             User              @relation(fields: [userId], references: [id])
+  reservation      Reservation?
+  guestReservation GuestReservation?
 
   @@index([userId])
   @@index([createdAt])

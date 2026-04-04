@@ -7,42 +7,53 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { format } from "date-fns"
 import { fr } from "date-fns/locale"
-import { Search, User, Eye, Ban } from "lucide-react"
+import { Search, User, Eye, Ban, Download, ChevronLeft, ChevronRight } from "lucide-react"
 import Link from "next/link"
 import { CreateClientDialog } from "@/components/admin/create-client-dialog"
+import { ExportClientsButton } from "@/components/admin/export-clients-button"
 
 interface PageProps {
-  searchParams: { q?: string }
+  searchParams: { q?: string; page?: string }
 }
+
+const CLIENTS_PER_PAGE = 50
 
 export default async function AdminClientsPage({ searchParams }: PageProps) {
   const query = searchParams.q || ""
+  const currentPage = parseInt(searchParams.page || "1")
+  const skip = (currentPage - 1) * CLIENTS_PER_PAGE
 
-  const clients = await db.user.findMany({
-    where: {
-      role: "CLIENT",
-      OR: query ? [
-        { email: { contains: query, mode: "insensitive" } },
-        { clientProfile: { firstName: { contains: query, mode: "insensitive" } } },
-        { clientProfile: { lastName: { contains: query, mode: "insensitive" } } },
-      ] : undefined,
-    },
-    include: {
-      clientProfile: true,
-      wallet: true,
-      _count: {
-        select: {
-          reservations: true,
-          purchases: true,
+  const whereClause = {
+    role: "CLIENT" as const,
+    OR: query ? [
+      { email: { contains: query, mode: "insensitive" as const } },
+      { clientProfile: { firstName: { contains: query, mode: "insensitive" as const } } },
+      { clientProfile: { lastName: { contains: query, mode: "insensitive" as const } } },
+    ] : undefined,
+  }
+
+  const [clients, totalClients, blacklistedCount] = await Promise.all([
+    db.user.findMany({
+      where: whereClause,
+      include: {
+        clientProfile: true,
+        wallet: true,
+        _count: {
+          select: {
+            reservations: true,
+            purchases: true,
+          },
         },
       },
-    },
-    orderBy: { createdAt: "desc" },
-    take: 100,
-  })
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: CLIENTS_PER_PAGE,
+    }),
+    db.user.count({ where: whereClause }),
+    db.user.count({ where: { ...whereClause, isBlacklisted: true } }),
+  ])
 
-  const totalClients = clients.length
-  const blacklistedCount = clients.filter(c => c.isBlacklisted).length
+  const totalPages = Math.ceil(totalClients / CLIENTS_PER_PAGE)
 
   return (
     <div className="space-y-6">
@@ -59,7 +70,10 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
             )}
           </p>
         </div>
-        <CreateClientDialog />
+        <div className="flex gap-2">
+          <ExportClientsButton />
+          <CreateClientDialog />
+        </div>
       </div>
 
       {/* Search */}
@@ -171,6 +185,39 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+          
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between pt-4 border-t mt-4">
+              <p className="text-sm text-muted-foreground">
+                Page {currentPage} sur {totalPages} ({totalClients} clients)
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage <= 1}
+                >
+                  <Link href={`/admin/clients?page=${currentPage - 1}${query ? `&q=${query}` : ""}`}>
+                    <ChevronLeft className="h-4 w-4 mr-1" />
+                    Précédent
+                  </Link>
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage >= totalPages}
+                >
+                  <Link href={`/admin/clients?page=${currentPage + 1}${query ? `&q=${query}` : ""}`}>
+                    Suivant
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Link>
+                </Button>
+              </div>
             </div>
           )}
         </CardContent>

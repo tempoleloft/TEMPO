@@ -24,7 +24,7 @@ export default async function AdminSessionPage({ params }: PageProps) {
       classType: true,
       teacher: true,
       reservations: {
-        where: { status: { in: ["BOOKED", "ATTENDED", "NO_SHOW"] } },
+        where: { status: { in: ["BOOKED", "ATTENDED", "NO_SHOW", "CANCELLED"] } },
         include: {
           user: {
             include: {
@@ -43,13 +43,20 @@ export default async function AdminSessionPage({ params }: PageProps) {
     notFound()
   }
 
-  const allActiveReservations = session.reservations // Includes BOOKED, ATTENDED, NO_SHOW
+  // For cancelled sessions, show all reservations (including cancelled ones)
+  // For active sessions, only show active reservations
+  const isCancelledSession = session.status === "CANCELLED"
+  const allActiveReservations = isCancelledSession 
+    ? session.reservations.filter(r => r.status === "CANCELLED")
+    : session.reservations.filter(r => ["BOOKED", "ATTENDED", "NO_SHOW"].includes(r.status))
+  
   const bookedReservations = session.reservations.filter(r => r.status === "BOOKED")
   const attendedReservations = session.reservations.filter(r => r.status === "ATTENDED")
   const noShowReservations = session.reservations.filter(r => r.status === "NO_SHOW")
+  const cancelledReservations = session.reservations.filter(r => r.status === "CANCELLED")
   
   // Count guests
-  const allGuests = session.reservations.flatMap(r => r.guestReservations || [])
+  const allGuests = allActiveReservations.flatMap(r => r.guestReservations || [])
   const totalGuests = allGuests.length
   
   // Total = reservations + guests
@@ -175,13 +182,15 @@ export default async function AdminSessionPage({ params }: PageProps) {
             Émargement
           </CardTitle>
           <CardDescription>
-            {isPastOrToday
+            {isCancelledSession
+              ? "Participants inscrits avant l'annulation du cours (crédits remboursés)"
+              : isPastOrToday
               ? "Cliquez sur Présent ou No-show pour chaque participant"
               : "L'émargement sera disponible le jour du cours"}
           </CardDescription>
           
           {/* Stats résumé */}
-          {totalParticipants > 0 && (
+          {totalParticipants > 0 && !isCancelledSession && (
             <div className="flex gap-4 mt-4">
               <div className="flex items-center gap-2 text-sm">
                 <div className="w-3 h-3 rounded-full bg-gray-300" />
@@ -195,6 +204,14 @@ export default async function AdminSessionPage({ params }: PageProps) {
                 <div className="w-3 h-3 rounded-full bg-red-500" />
                 <span>Absents: {noShowReservations.length}</span>
               </div>
+            </div>
+          )}
+          {isCancelledSession && totalParticipants > 0 && (
+            <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+              <p className="text-sm text-amber-800">
+                <strong>{totalParticipants} personne{totalParticipants > 1 ? "s" : ""}</strong> étai{totalParticipants > 1 ? "en" : ""}t inscrite{totalParticipants > 1 ? "s" : ""} à ce cours.
+                Un email d&apos;annulation leur a été envoyé et leurs crédits ont été remboursés.
+              </p>
             </div>
           )}
         </CardHeader>
@@ -213,6 +230,7 @@ export default async function AdminSessionPage({ params }: PageProps) {
                     BOOKED: "bg-gray-50",
                     ATTENDED: "bg-green-50 border-l-4 border-green-500",
                     NO_SHOW: "bg-red-50 border-l-4 border-red-500",
+                    CANCELLED: "bg-amber-50 border-l-4 border-amber-400",
                   }
                   
                   const elements = []
@@ -231,6 +249,8 @@ export default async function AdminSessionPage({ params }: PageProps) {
                             ? "bg-green-600 text-white"
                             : reservation.status === "NO_SHOW"
                             ? "bg-red-600 text-white"
+                            : reservation.status === "CANCELLED"
+                            ? "bg-amber-500 text-white"
                             : "bg-tempo-bordeaux text-tempo-creme"
                         }`}>
                           {reservation.status === "ATTENDED" ? (
@@ -269,7 +289,11 @@ export default async function AdminSessionPage({ params }: PageProps) {
                           <p className="font-semibold">{reservation.user.wallet?.creditsBalance || 0}</p>
                         </div>
                         
-                        {isPastOrToday ? (
+                        {isCancelledSession ? (
+                          <Badge variant="outline" className="text-amber-600 border-amber-300">
+                            Remboursé
+                          </Badge>
+                        ) : isPastOrToday ? (
                           <AttendanceButtons
                             reservationId={reservation.id}
                             currentStatus={reservation.status as "BOOKED" | "ATTENDED" | "NO_SHOW"}

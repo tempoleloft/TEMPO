@@ -2,7 +2,7 @@ import { Resend } from "resend"
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
-const FROM_EMAIL = process.env.FROM_EMAIL || "Tempo Le Loft <onboarding@resend.dev>"
+const FROM_EMAIL = process.env.FROM_EMAIL || "Nina - Tempo Le Loft <contact@tempoleloft.com>"
 const BASE_URL = process.env.NODE_ENV === "production" 
   ? "https://tempoleloft.com" 
   : (process.env.NEXTAUTH_URL || "http://localhost:3000")

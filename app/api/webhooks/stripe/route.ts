@@ -3,6 +3,10 @@ import { headers } from "next/headers"
 import { getStripe, isStripeConfigured } from "@/lib/stripe"
 import { db } from "@/lib/db"
 import Stripe from "stripe"
+import { 
+  sendMembershipWelcomeEmail, 
+  sendMembershipRenewalConfirmationEmail 
+} from "@/lib/email"
 
 export const dynamic = 'force-dynamic'
 
@@ -185,12 +189,23 @@ async function handleMembershipCheckoutCompleted(session: Stripe.Checkout.Sessio
   }
 
   try {
-    const plan = await db.membershipPlan.findUnique({
-      where: { id: planId },
-    })
+    const [plan, user] = await Promise.all([
+      db.membershipPlan.findUnique({
+        where: { id: planId },
+      }),
+      db.user.findUnique({
+        where: { id: userId },
+        include: { clientProfile: true },
+      }),
+    ])
 
     if (!plan) {
       console.error("Membership plan not found:", planId)
+      return
+    }
+
+    if (!user) {
+      console.error("User not found:", userId)
       return
     }
 
@@ -253,6 +268,19 @@ async function handleMembershipCheckoutCompleted(session: Stripe.Checkout.Sessio
       })
     })
 
+    // 4. Send welcome email
+    const firstName = user.clientProfile?.firstName || user.name?.split(" ")[0] || "Membre"
+    await sendMembershipWelcomeEmail(
+      user.email,
+      firstName,
+      plan.name,
+      plan.creditsPerMonth,
+      now,
+      commitmentEndDate,
+      plan.commitmentMonths,
+      plan.promoBonusCredits || undefined
+    )
+
     console.log(`Membership created for user ${userId}: ${plan.name} with ${initialCredits} credits`)
   } catch (error) {
     console.error("Error creating membership:", error)
@@ -270,7 +298,12 @@ async function handleMembershipInvoicePaid(invoice: Stripe.Invoice) {
   try {
     const membership = await db.membership.findUnique({
       where: { stripeSubscriptionId: subscriptionId },
-      include: { plan: true },
+      include: { 
+        plan: true,
+        user: {
+          include: { clientProfile: true },
+        },
+      },
     })
 
     if (!membership) {
@@ -321,6 +354,17 @@ async function handleMembershipInvoicePaid(invoice: Stripe.Invoice) {
         },
       })
     })
+
+    // 4. Send renewal confirmation email
+    const firstName = membership.user.clientProfile?.firstName || membership.user.name?.split(" ")[0] || "Membre"
+    await sendMembershipRenewalConfirmationEmail(
+      membership.user.email,
+      firstName,
+      membership.plan.name,
+      membership.plan.creditsPerMonth,
+      now,
+      newPeriodEnd
+    )
 
     console.log(`Monthly credits added for membership ${membership.id}: ${membership.plan.creditsPerMonth} credits`)
   } catch (error) {

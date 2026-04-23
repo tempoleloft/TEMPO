@@ -56,13 +56,39 @@ export async function POST(request: Request) {
   switch (event.type) {
     case "checkout.session.completed": {
       const session = event.data.object as Stripe.Checkout.Session
-      await handleCheckoutCompleted(session)
+      // Check if it's a membership subscription or a regular purchase
+      if (session.mode === "subscription" && session.metadata?.type === "membership") {
+        await handleMembershipCheckoutCompleted(session)
+      } else {
+        await handleCheckoutCompleted(session)
+      }
       break
     }
     
     case "checkout.session.expired": {
       const session = event.data.object as Stripe.Checkout.Session
       await handleCheckoutExpired(session)
+      break
+    }
+
+    case "invoice.paid": {
+      const invoice = event.data.object as Stripe.Invoice
+      // Handle recurring membership payments
+      if (invoice.subscription && invoice.billing_reason === "subscription_cycle") {
+        await handleMembershipInvoicePaid(invoice)
+      }
+      break
+    }
+
+    case "customer.subscription.updated": {
+      const subscription = event.data.object as Stripe.Subscription
+      await handleSubscriptionUpdated(subscription)
+      break
+    }
+
+    case "customer.subscription.deleted": {
+      const subscription = event.data.object as Stripe.Subscription
+      await handleSubscriptionDeleted(subscription)
       break
     }
 
@@ -145,5 +171,209 @@ async function handleCheckoutExpired(session: Stripe.Checkout.Session) {
     console.log(`Checkout expired for purchase ${purchaseId}`)
   } catch (error) {
     console.error("Error handling checkout expiration:", error)
+  }
+}
+
+async function handleMembershipCheckoutCompleted(session: Stripe.Checkout.Session) {
+  const userId = session.metadata?.userId
+  const planId = session.metadata?.planId
+  const subscriptionId = session.subscription as string
+
+  if (!userId || !planId || !subscriptionId) {
+    console.error("Missing metadata in membership checkout session:", session.id)
+    return
+  }
+
+  try {
+    const plan = await db.membershipPlan.findUnique({
+      where: { id: planId },
+    })
+
+    if (!plan) {
+      console.error("Membership plan not found:", planId)
+      return
+    }
+
+    const now = new Date()
+    const commitmentEndDate = new Date(now)
+    commitmentEndDate.setMonth(commitmentEndDate.getMonth() + plan.commitmentMonths)
+    
+    const currentPeriodEnd = new Date(now)
+    currentPeriodEnd.setMonth(currentPeriodEnd.getMonth() + 1)
+    
+    const creditsExpiryDate = new Date(commitmentEndDate)
+    creditsExpiryDate.setMonth(creditsExpiryDate.getMonth() + 1) // +1 month grace period
+
+    // Calculate initial credits (including promo)
+    let initialCredits = plan.creditsPerMonth
+    if (plan.promoBonusCredits) {
+      initialCredits += plan.promoBonusCredits
+    }
+
+    await db.$transaction(async (tx) => {
+      // 1. Create membership
+      await tx.membership.create({
+        data: {
+          userId,
+          planId,
+          startDate: now,
+          currentPeriodStart: now,
+          currentPeriodEnd,
+          commitmentEndDate,
+          creditsExpiryDate,
+          stripeSubscriptionId: subscriptionId,
+          stripeCustomerId: session.customer as string,
+          totalCreditsGranted: initialCredits,
+          monthsCompleted: 0,
+        },
+      })
+
+      // 2. Add credits to wallet
+      await tx.wallet.upsert({
+        where: { userId },
+        create: {
+          userId,
+          creditsBalance: initialCredits,
+        },
+        update: {
+          creditsBalance: { increment: initialCredits },
+        },
+      })
+
+      // 3. Create ledger entry
+      await tx.creditLedger.create({
+        data: {
+          userId,
+          delta: initialCredits,
+          reason: "MEMBERSHIP",
+          refType: "Membership",
+          refId: planId,
+          notes: `Abonnement ${plan.name} - Premier mois${plan.promoBonusCredits ? ` + ${plan.promoBonusCredits} crédits bonus` : ""}`,
+        },
+      })
+    })
+
+    console.log(`Membership created for user ${userId}: ${plan.name} with ${initialCredits} credits`)
+  } catch (error) {
+    console.error("Error creating membership:", error)
+    throw error
+  }
+}
+
+async function handleMembershipInvoicePaid(invoice: Stripe.Invoice) {
+  const subscriptionId = invoice.subscription as string
+
+  if (!subscriptionId) {
+    return
+  }
+
+  try {
+    const membership = await db.membership.findUnique({
+      where: { stripeSubscriptionId: subscriptionId },
+      include: { plan: true },
+    })
+
+    if (!membership) {
+      console.log("Membership not found for subscription:", subscriptionId)
+      return
+    }
+
+    const now = new Date()
+    const newPeriodEnd = new Date(now)
+    newPeriodEnd.setMonth(newPeriodEnd.getMonth() + 1)
+
+    const newCreditsExpiryDate = new Date(membership.commitmentEndDate)
+    newCreditsExpiryDate.setMonth(newCreditsExpiryDate.getMonth() + 1)
+
+    await db.$transaction(async (tx) => {
+      // 1. Update membership
+      await tx.membership.update({
+        where: { id: membership.id },
+        data: {
+          currentPeriodStart: now,
+          currentPeriodEnd: newPeriodEnd,
+          monthsCompleted: { increment: 1 },
+          totalCreditsGranted: { increment: membership.plan.creditsPerMonth },
+        },
+      })
+
+      // 2. Add monthly credits
+      await tx.wallet.upsert({
+        where: { userId: membership.userId },
+        create: {
+          userId: membership.userId,
+          creditsBalance: membership.plan.creditsPerMonth,
+        },
+        update: {
+          creditsBalance: { increment: membership.plan.creditsPerMonth },
+        },
+      })
+
+      // 3. Create ledger entry
+      await tx.creditLedger.create({
+        data: {
+          userId: membership.userId,
+          delta: membership.plan.creditsPerMonth,
+          reason: "MEMBERSHIP",
+          refType: "Membership",
+          refId: membership.id,
+          notes: `Abonnement ${membership.plan.name} - Renouvellement mensuel`,
+        },
+      })
+    })
+
+    console.log(`Monthly credits added for membership ${membership.id}: ${membership.plan.creditsPerMonth} credits`)
+  } catch (error) {
+    console.error("Error processing membership invoice:", error)
+    throw error
+  }
+}
+
+async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
+  try {
+    const membership = await db.membership.findUnique({
+      where: { stripeSubscriptionId: subscription.id },
+    })
+
+    if (!membership) {
+      return
+    }
+
+    // Check if subscription is being cancelled at period end
+    if (subscription.cancel_at_period_end) {
+      await db.membership.update({
+        where: { id: membership.id },
+        data: {
+          cancelAtPeriodEnd: true,
+          cancelledAt: new Date(),
+        },
+      })
+      console.log(`Membership ${membership.id} will be cancelled at period end`)
+    }
+  } catch (error) {
+    console.error("Error handling subscription update:", error)
+  }
+}
+
+async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
+  try {
+    const membership = await db.membership.findUnique({
+      where: { stripeSubscriptionId: subscription.id },
+    })
+
+    if (!membership) {
+      return
+    }
+
+    await db.membership.update({
+      where: { id: membership.id },
+      data: {
+        status: "EXPIRED",
+      },
+    })
+
+    console.log(`Membership ${membership.id} has expired`)
+  } catch (error) {
+    console.error("Error handling subscription deletion:", error)
   }
 }

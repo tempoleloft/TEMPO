@@ -8,6 +8,7 @@ import { signOut } from "next-auth/react"
 import { 
   Calendar, 
   CreditCard, 
+  Crown,
   Dumbbell,
   Home, 
   LogOut, 
@@ -49,6 +50,7 @@ const adminNav: NavItem[] = [
   { title: "Tableau de bord", href: "/admin", icon: <Home className="h-4 w-4" /> },
   { title: "Planning", href: "/admin/planning", icon: <Calendar className="h-4 w-4" /> },
   { title: "Clients", href: "/admin/clients", icon: <Users className="h-4 w-4" /> },
+  { title: "Memberships", href: "/admin/memberships", icon: <Crown className="h-4 w-4" /> },
   { title: "Professeurs", href: "/admin/profs", icon: <User className="h-4 w-4" /> },
   { title: "Disciplines", href: "/admin/disciplines", icon: <Dumbbell className="h-4 w-4" /> },
   { title: "Produits", href: "/admin/produits", icon: <LayoutGrid className="h-4 w-4" /> },

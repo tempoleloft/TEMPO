@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { format } from "date-fns"
 import { fr } from "date-fns/locale"
-import { Search, User, Eye, Ban, Download, ChevronLeft, ChevronRight } from "lucide-react"
+import { Search, User, Eye, Ban, Download, ChevronLeft, ChevronRight, Crown } from "lucide-react"
 import Link from "next/link"
 import { CreateClientDialog } from "@/components/admin/create-client-dialog"
 import { ExportClientsButton } from "@/components/admin/export-clients-button"
@@ -32,12 +32,17 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
     ] : undefined,
   }
 
-  const [clients, totalClients, blacklistedCount] = await Promise.all([
+  const [clients, totalClients, blacklistedCount, membersCount] = await Promise.all([
     db.user.findMany({
       where: whereClause,
       include: {
         clientProfile: true,
         wallet: true,
+        memberships: {
+          where: { status: "ACTIVE" },
+          take: 1,
+          include: { plan: true },
+        },
         _count: {
           select: {
             reservations: true,
@@ -51,6 +56,7 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
     }),
     db.user.count({ where: whereClause }),
     db.user.count({ where: { ...whereClause, isBlacklisted: true } }),
+    db.membership.count({ where: { status: "ACTIVE" } }),
   ])
 
   const totalPages = Math.ceil(totalClients / CLIENTS_PER_PAGE)
@@ -63,9 +69,14 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
           <h1 className="text-3xl font-bold text-tempo-bordeaux">Clients</h1>
           <p className="text-muted-foreground mt-1">
             {totalClients} client{totalClients > 1 ? "s" : ""} enregistré{totalClients > 1 ? "s" : ""}
+            {membersCount > 0 && (
+              <span className="text-purple-600 ml-2">
+                • {membersCount} membre{membersCount > 1 ? "s" : ""}
+              </span>
+            )}
             {blacklistedCount > 0 && (
               <span className="text-red-600 ml-2">
-                ({blacklistedCount} blacklisté{blacklistedCount > 1 ? "s" : ""})
+                • {blacklistedCount} blacklisté{blacklistedCount > 1 ? "s" : ""}
               </span>
             )}
           </p>
@@ -116,6 +127,7 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
                     <th className="pb-3 font-medium">Client</th>
                     <th className="pb-3 font-medium text-center hidden sm:table-cell">Crédits</th>
                     <th className="pb-3 font-medium text-center hidden md:table-cell">Réservations</th>
+                    <th className="pb-3 font-medium text-center hidden md:table-cell">Membre</th>
                     <th className="pb-3 font-medium hidden lg:table-cell">Inscrit le</th>
                     <th className="pb-3 font-medium text-center">Statut</th>
                     <th className="pb-3 font-medium text-right">Actions</th>
@@ -157,6 +169,16 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
                       </td>
                       <td className="py-3 text-center hidden md:table-cell">
                         {client._count.reservations}
+                      </td>
+                      <td className="py-3 text-center hidden md:table-cell">
+                        {client.memberships && client.memberships.length > 0 ? (
+                          <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-100">
+                            <Crown className="h-3 w-3 mr-1" />
+                            {client.memberships[0].plan.name}
+                          </Badge>
+                        ) : (
+                          <span className="text-muted-foreground text-xs">-</span>
+                        )}
                       </td>
                       <td className="py-3 text-sm text-muted-foreground hidden lg:table-cell">
                         {format(client.createdAt, "d MMM yyyy", { locale: fr })}

@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { format } from "date-fns"
 import { fr } from "date-fns/locale"
-import { Wallet, TrendingUp, Users, Download } from "lucide-react"
+import { Wallet, TrendingUp, Users, Download, Crown } from "lucide-react"
 import { ExportButton } from "@/components/admin/export-button"
 import { TeacherStats } from "@/components/admin/teacher-stats"
 
@@ -11,23 +11,33 @@ export const dynamic = 'force-dynamic'
 
 export default async function FinancesPage() {
   // Get all paid purchases with user info
-  const purchases = await db.purchase.findMany({
-    where: { status: "PAID" },
-    include: {
-      user: {
-        include: {
-          clientProfile: true,
+  const [purchases, memberships, teachers] = await Promise.all([
+    db.purchase.findMany({
+      where: { status: "PAID" },
+      include: {
+        user: {
+          include: {
+            clientProfile: true,
+          },
         },
+        product: true,
       },
-      product: true,
-    },
-    orderBy: { createdAt: "desc" },
-  })
-
-  // Get all teachers with their sessions (only past sessions)
-  let teachers: any[] = []
-  try {
-    teachers = await db.teacherProfile.findMany({
+      orderBy: { createdAt: "desc" },
+    }),
+    // Get all memberships (for revenue tracking)
+    db.membership.findMany({
+      include: {
+        user: {
+          include: {
+            clientProfile: true,
+          },
+        },
+        plan: true,
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    // Get all teachers with their sessions (only past sessions)
+    db.teacherProfile.findMany({
       where: { isActive: true },
       include: {
         sessions: {
@@ -45,20 +55,38 @@ export default async function FinancesPage() {
         },
       },
       orderBy: { displayName: "asc" },
-    })
-  } catch (e) {
-    console.error("Error fetching teachers:", e)
-  }
+    }).catch(() => []),
+  ])
+
+  // Calculate membership revenue (months completed * monthly price)
+  const membershipRevenue = memberships.reduce((sum, m) => {
+    // First month + completed months
+    const monthsPaid = m.monthsCompleted + 1
+    return sum + (monthsPaid * m.plan.priceCentsPerMonth)
+  }, 0)
 
   // Calculate stats
-  const totalRevenue = purchases.reduce((sum, p) => sum + p.amountCents, 0)
+  const purchaseRevenue = purchases.reduce((sum, p) => sum + p.amountCents, 0)
+  const totalRevenue = purchaseRevenue + membershipRevenue
+  
+  const now = new Date()
   const thisMonthPurchases = purchases.filter(p => {
-    const now = new Date()
     return p.createdAt.getMonth() === now.getMonth() && 
            p.createdAt.getFullYear() === now.getFullYear()
   })
-  const thisMonthRevenue = thisMonthPurchases.reduce((sum, p) => sum + p.amountCents, 0)
-  const uniqueClients = new Set(purchases.map(p => p.userId)).size
+  const thisMonthMemberships = memberships.filter(m => {
+    // Count memberships that were active this month
+    return m.currentPeriodStart.getMonth() === now.getMonth() && 
+           m.currentPeriodStart.getFullYear() === now.getFullYear()
+  })
+  const thisMonthPurchaseRevenue = thisMonthPurchases.reduce((sum, p) => sum + p.amountCents, 0)
+  const thisMonthMembershipRevenue = thisMonthMemberships.reduce((sum, m) => sum + m.plan.priceCentsPerMonth, 0)
+  const thisMonthRevenue = thisMonthPurchaseRevenue + thisMonthMembershipRevenue
+  
+  const uniquePurchaseClients = new Set(purchases.map(p => p.userId))
+  const uniqueMemberClients = new Set(memberships.map(m => m.userId))
+  const uniqueClients = new Set([...uniquePurchaseClients, ...uniqueMemberClients]).size
+  const activeMembersCount = memberships.filter(m => m.status === "ACTIVE").length
 
   return (
     <div className="space-y-6">
@@ -74,7 +102,7 @@ export default async function FinancesPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -87,7 +115,7 @@ export default async function FinancesPage() {
               {(totalRevenue / 100).toFixed(0)}€
             </div>
             <p className="text-xs text-muted-foreground">
-              {purchases.length} paiements
+              Achats + Memberships
             </p>
           </CardContent>
         </Card>
@@ -104,7 +132,24 @@ export default async function FinancesPage() {
               {(thisMonthRevenue / 100).toFixed(0)}€
             </div>
             <p className="text-xs text-muted-foreground">
-              {thisMonthPurchases.length} paiements
+              {thisMonthPurchases.length} achats + {thisMonthMemberships.length} abo
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Memberships
+            </CardTitle>
+            <Crown className="h-4 w-4 text-purple-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-purple-600">
+              {(membershipRevenue / 100).toFixed(0)}€
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {activeMembersCount} membre{activeMembersCount > 1 ? "s" : ""} actif{activeMembersCount > 1 ? "s" : ""}
             </p>
           </CardContent>
         </Card>
@@ -131,16 +176,16 @@ export default async function FinancesPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Panier moyen
             </CardTitle>
-            <Wallet className="h-4 w-4 text-purple-600" />
+            <Wallet className="h-4 w-4 text-amber-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-purple-600">
+            <div className="text-2xl font-bold text-amber-600">
               {purchases.length > 0 
-                ? (totalRevenue / 100 / purchases.length).toFixed(0)
+                ? (purchaseRevenue / 100 / purchases.length).toFixed(0)
                 : 0}€
             </div>
             <p className="text-xs text-muted-foreground">
-              par transaction
+              par achat unitaire
             </p>
           </CardContent>
         </Card>

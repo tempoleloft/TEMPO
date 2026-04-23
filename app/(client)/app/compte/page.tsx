@@ -7,7 +7,9 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { format } from "date-fns"
 import { fr } from "date-fns/locale"
-import { User, Mail, Phone, Calendar, CreditCard } from "lucide-react"
+import { User, Mail, Phone, Calendar, CreditCard, Crown } from "lucide-react"
+import Link from "next/link"
+import { MembershipCard } from "@/components/membership-card"
 
 export default async function ComptePage() {
   const session = await auth()
@@ -16,7 +18,7 @@ export default async function ComptePage() {
     return null
   }
 
-  const [profile, wallet, creditHistory] = await Promise.all([
+  const [profile, wallet, creditHistory, membership] = await Promise.all([
     db.clientProfile.findUnique({
       where: { userId: session.user.id },
     }),
@@ -27,6 +29,11 @@ export default async function ComptePage() {
       where: { userId: session.user.id },
       orderBy: { createdAt: "desc" },
       take: 15,
+    }),
+    db.membership.findFirst({
+      where: { userId: session.user.id, status: { in: ["ACTIVE", "CANCELLED"] } },
+      include: { plan: true },
+      orderBy: { createdAt: "desc" },
     }),
   ])
 
@@ -41,6 +48,33 @@ export default async function ComptePage() {
           Gérez vos informations personnelles
         </p>
       </div>
+
+      {/* Membership */}
+      {membership ? (
+        <MembershipCard membership={membership} />
+      ) : (
+        <Card className="bg-gradient-to-br from-purple-50 to-tempo-taupe/20 border-purple-200">
+          <CardContent className="py-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Crown className="h-8 w-8 text-purple-600" />
+                <div>
+                  <h3 className="font-semibold text-tempo-bordeaux">Pas encore membre ?</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Découvrez nos abonnements pour pratiquer régulièrement
+                  </p>
+                </div>
+              </div>
+              <Button asChild className="bg-purple-600 hover:bg-purple-700">
+                <Link href="/tarifs">
+                  <Crown className="h-4 w-4 mr-2" />
+                  Voir les formules
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid md:grid-cols-2 gap-6">
         {/* Profile Info */}
@@ -147,6 +181,7 @@ export default async function ComptePage() {
                       {entry.reason === "CANCEL_REFUND" && "Annulation"}
                       {entry.reason === "ADMIN_ADJUST" && "Ajustement admin"}
                       {entry.reason === "EXPIRATION" && "Expiration"}
+                      {entry.reason === "MEMBERSHIP" && "Abonnement"}
                     </p>
                     <p className="text-sm text-muted-foreground">
                       {format(entry.createdAt, "d MMM yyyy à HH:mm", { locale: fr })}

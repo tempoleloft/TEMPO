@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { TarifsSection } from "@/components/tarifs-section"
+import { MembershipPlansSection } from "@/components/membership-plans-section"
 
 export const dynamic = 'force-dynamic'
 
@@ -10,10 +11,19 @@ export default async function TarifsPage() {
   const session = await auth()
   const isLoggedIn = !!session?.user
   
-  const products = await db.product.findMany({
-    where: { active: true },
-    orderBy: { sortOrder: "asc" },
-  })
+  const [products, membershipPlans, userMembership] = await Promise.all([
+    db.product.findMany({
+      where: { active: true },
+      orderBy: { sortOrder: "asc" },
+    }),
+    db.membershipPlan.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: "asc" },
+    }),
+    session?.user ? db.membership.findFirst({
+      where: { userId: session.user.id, status: "ACTIVE" },
+    }) : null,
+  ])
 
   // Separate visible and hidden products
   const visibleProducts = products.filter(p => !p.isHidden)
@@ -33,6 +43,15 @@ export default async function TarifsPage() {
           </p>
         </div>
       </section>
+
+      {/* Membership Plans */}
+      {membershipPlans.length > 0 && (
+        <MembershipPlansSection 
+          plans={membershipPlans}
+          isLoggedIn={isLoggedIn}
+          hasActiveMembership={!!userMembership}
+        />
+      )}
 
       {/* Pricing Cards */}
       <TarifsSection 

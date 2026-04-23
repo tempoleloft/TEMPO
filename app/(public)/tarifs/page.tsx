@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { TarifsSection } from "@/components/tarifs-section"
-import { MembershipPlansSection } from "@/components/membership-plans-section"
+import { Crown } from "lucide-react"
 
 export const dynamic = 'force-dynamic'
 
@@ -11,19 +11,10 @@ export default async function TarifsPage() {
   const session = await auth()
   const isLoggedIn = !!session?.user
   
-  const [products, membershipPlans, userMembership] = await Promise.all([
-    db.product.findMany({
-      where: { active: true },
-      orderBy: { sortOrder: "asc" },
-    }),
-    db.membershipPlan.findMany({
-      where: { isActive: true },
-      orderBy: { sortOrder: "asc" },
-    }),
-    session?.user ? db.membership.findFirst({
-      where: { userId: session.user.id, status: "ACTIVE" },
-    }) : null,
-  ])
+  const products = await db.product.findMany({
+    where: { active: true },
+    orderBy: { sortOrder: "asc" },
+  })
 
   // Separate visible and hidden products
   const visibleProducts = products.filter(p => !p.isHidden)
@@ -44,14 +35,30 @@ export default async function TarifsPage() {
         </div>
       </section>
 
-      {/* Membership Plans */}
-      {membershipPlans.length > 0 && (
-        <MembershipPlansSection 
-          plans={membershipPlans}
-          isLoggedIn={isLoggedIn}
-          hasActiveMembership={!!userMembership}
-        />
-      )}
+      {/* Membership CTA */}
+      <section className="py-8 px-4 sm:px-6 bg-gradient-to-r from-purple-50 to-tempo-taupe/20">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-6 bg-white rounded-xl shadow-sm border border-purple-200">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                <Crown className="h-6 w-6 text-purple-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-tempo-bordeaux">Pratiquez régulièrement ?</h3>
+                <p className="text-sm text-muted-foreground">
+                  Découvrez nos abonnements Membership avec crédits mensuels et tarifs préférentiels
+                </p>
+              </div>
+            </div>
+            <Button asChild className="bg-purple-600 hover:bg-purple-700 whitespace-nowrap">
+              <Link href="/membership">
+                <Crown className="h-4 w-4 mr-2" />
+                Voir le Membership
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </section>
 
       {/* Pricing Cards */}
       <TarifsSection 

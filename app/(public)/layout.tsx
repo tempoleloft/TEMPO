@@ -61,6 +61,13 @@ export default async function PublicLayout({
             <Link href="/tarifs" className="hover:opacity-70 transition-opacity">
               Tarifs
             </Link>
+            <Link href="/membership" className="hover:opacity-70 transition-opacity flex items-center gap-1">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-400">
+                <path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z"/>
+                <path d="M5 21h14"/>
+              </svg>
+              Membership
+            </Link>
             <Link href="/cafe" className="hover:opacity-70 transition-opacity">
               Café
             </Link>
@@ -124,6 +131,7 @@ export default async function PublicLayout({
               <h5 className="font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Infos</h5>
               <ul className="space-y-2 text-sm opacity-70">
                 <li><Link href="/tarifs" className="hover:opacity-100">Tarifs</Link></li>
+                <li><Link href="/membership" className="hover:opacity-100">Membership</Link></li>
                 <li><Link href="/faq" className="hover:opacity-100">FAQ</Link></li>
                 <li><Link href="/contact" className="hover:opacity-100">Contact</Link></li>
               </ul>

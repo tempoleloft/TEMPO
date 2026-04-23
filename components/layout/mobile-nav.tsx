@@ -6,7 +6,7 @@ import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { signOut } from "next-auth/react"
 import { Button } from "@/components/ui/button"
-import { Menu, X, Home, Users, Calendar, CreditCard, User, LogOut, Coffee } from "lucide-react"
+import { Menu, X, Home, Users, Calendar, CreditCard, User, LogOut, Coffee, Crown } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface MobileNavProps {
@@ -20,6 +20,7 @@ const publicLinks = [
   { href: "/profs", label: "Professeurs", icon: Users },
   { href: "/planning", label: "Planning", icon: Calendar },
   { href: "/tarifs", label: "Tarifs", icon: CreditCard },
+  { href: "/membership", label: "Membership", icon: Crown },
   { href: "/cafe", label: "Le Café", icon: Coffee },
 ]
 

@@ -5,9 +5,14 @@ import { db } from "@/lib/db"
 import { revalidatePath } from "next/cache"
 import Stripe from "stripe"
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2024-06-20",
-})
+const getStripe = () => {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    return null
+  }
+  return new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: "2024-06-20",
+  })
+}
 
 interface CreateMembershipPlanInput {
   name: string
@@ -28,28 +33,42 @@ export async function createMembershipPlan(input: CreateMembershipPlanInput) {
   }
 
   try {
-    // Create Stripe product and price
-    const stripeProduct = await stripe.products.create({
-      name: `Membership - ${input.name}`,
-      description: input.description || undefined,
-      metadata: {
-        type: "membership",
-        creditsPerMonth: input.creditsPerMonth.toString(),
-        commitmentMonths: input.commitmentMonths.toString(),
-      },
-    })
+    const stripe = getStripe()
+    let stripeProductId: string | null = null
+    let stripePriceId: string | null = null
 
-    const stripePrice = await stripe.prices.create({
-      product: stripeProduct.id,
-      unit_amount: input.priceCentsPerMonth,
-      currency: "eur",
-      recurring: {
-        interval: "month",
-      },
-      metadata: {
-        type: "membership",
-      },
-    })
+    // Create Stripe product and price if Stripe is configured
+    if (stripe) {
+      try {
+        const stripeProduct = await stripe.products.create({
+          name: `Membership - ${input.name}`,
+          description: input.description || undefined,
+          metadata: {
+            type: "membership",
+            creditsPerMonth: input.creditsPerMonth.toString(),
+            commitmentMonths: input.commitmentMonths.toString(),
+          },
+        })
+
+        const stripePrice = await stripe.prices.create({
+          product: stripeProduct.id,
+          unit_amount: input.priceCentsPerMonth,
+          currency: "eur",
+          recurring: {
+            interval: "month",
+          },
+          metadata: {
+            type: "membership",
+          },
+        })
+
+        stripeProductId = stripeProduct.id
+        stripePriceId = stripePrice.id
+      } catch (stripeError: any) {
+        console.error("Stripe error:", stripeError?.message || stripeError)
+        return { success: false, error: `Erreur Stripe: ${stripeError?.message || "Erreur inconnue"}` }
+      }
+    }
 
     // Create in database
     const plan = await db.membershipPlan.create({
@@ -62,16 +81,16 @@ export async function createMembershipPlan(input: CreateMembershipPlanInput) {
         renewalType: input.renewalType,
         promoFreeMonths: input.promoFreeMonths,
         promoBonusCredits: input.promoBonusCredits,
-        stripeProductId: stripeProduct.id,
-        stripePriceId: stripePrice.id,
+        stripeProductId,
+        stripePriceId,
       },
     })
 
     revalidatePath("/admin/memberships")
     return { success: true, planId: plan.id }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error creating membership plan:", error)
-    return { success: false, error: "Erreur lors de la création de la formule" }
+    return { success: false, error: error?.message || "Erreur lors de la création de la formule" }
   }
 }
 
@@ -96,8 +115,9 @@ export async function toggleMembershipPlanActive(planId: string) {
       data: { isActive: !plan.isActive },
     })
 
-    // Update Stripe product
-    if (plan.stripeProductId) {
+    // Update Stripe product if configured
+    const stripe = getStripe()
+    if (stripe && plan.stripeProductId) {
       await stripe.products.update(plan.stripeProductId, {
         active: !plan.isActive,
       })
@@ -137,7 +157,8 @@ export async function deleteMembershipPlan(planId: string) {
     }
 
     // Archive in Stripe (can't delete products with prices)
-    if (plan.stripeProductId) {
+    const stripe = getStripe()
+    if (stripe && plan.stripeProductId) {
       await stripe.products.update(plan.stripeProductId, {
         active: false,
       })
@@ -179,7 +200,8 @@ export async function cancelMembership(membershipId: string) {
     }
 
     // Cancel in Stripe at period end
-    if (membership.stripeSubscriptionId) {
+    const stripe = getStripe()
+    if (stripe && membership.stripeSubscriptionId) {
       await stripe.subscriptions.update(membership.stripeSubscriptionId, {
         cancel_at_period_end: true,
       })

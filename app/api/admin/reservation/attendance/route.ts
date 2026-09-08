@@ -3,10 +3,22 @@ import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { revalidatePath } from "next/cache"
 
+async function canMarkAttendance(userId: string, role: string, sessionTeacherId: string) {
+  if (role === "ADMIN") return true
+  if (role !== "TEACHER") return false
+
+  const teacherProfile = await db.teacherProfile.findUnique({
+    where: { userId },
+    select: { id: true },
+  })
+
+  return teacherProfile?.id === sessionTeacherId
+}
+
 export async function POST(req: NextRequest) {
   const session = await auth()
-  
-  if (!session?.user || session.user.role !== "ADMIN") {
+
+  if (!session?.user || !["ADMIN", "TEACHER"].includes(session.user.role)) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
   }
 
@@ -29,6 +41,16 @@ export async function POST(req: NextRequest) {
 
     if (!reservation) {
       return NextResponse.json({ error: "Réservation non trouvée" }, { status: 404 })
+    }
+
+    const allowed = await canMarkAttendance(
+      session.user.id,
+      session.user.role,
+      reservation.session.teacherId
+    )
+
+    if (!allowed) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 403 })
     }
 
     await db.reservation.update({

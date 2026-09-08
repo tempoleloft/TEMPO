@@ -8,8 +8,10 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { format } from "date-fns"
 import { fr } from "date-fns/locale"
-import { Clock, MapPin, Users, ArrowLeft, UserPlus } from "lucide-react"
+import { Clock, MapPin, Users, ArrowLeft, UserPlus, Check, X, ClipboardList } from "lucide-react"
 import Link from "next/link"
+import { AttendanceButtons } from "@/components/admin/attendance-buttons"
+import { WalkInAttendanceButtons } from "@/components/admin/walkin-attendance-buttons"
 
 interface PageProps {
   params: { id: string }
@@ -22,7 +24,6 @@ export default async function TeacherSessionPage({ params }: PageProps) {
     redirect("/login")
   }
 
-  // Get teacher profile
   const teacherProfile = await db.teacherProfile.findUnique({
     where: { userId: authSession.user.id },
   })
@@ -41,7 +42,7 @@ export default async function TeacherSessionPage({ params }: PageProps) {
       classType: true,
       teacher: true,
       reservations: {
-        where: { status: "BOOKED" },
+        where: { status: { in: ["BOOKED", "ATTENDED", "NO_SHOW"] } },
         include: {
           user: {
             include: {
@@ -63,18 +64,32 @@ export default async function TeacherSessionPage({ params }: PageProps) {
     notFound()
   }
 
-  // Check if this teacher owns this session
   if (classSession.teacherId !== teacherProfile.id) {
     redirect("/teacher")
   }
 
-  // Calculate totals
   const guestCount = classSession.reservations.reduce(
     (acc, r) => acc + (r.guestReservations?.length || 0),
     0
   )
   const walkInCount = classSession.walkInParticipants?.length || 0
   const totalParticipants = classSession.reservations.length + guestCount + walkInCount
+
+  const bookedCount =
+    classSession.reservations.filter((r) => r.status === "BOOKED").length +
+    classSession.walkInParticipants.filter((w) => w.status === "BOOKED").length
+  const presentCount =
+    classSession.reservations.filter((r) => r.status === "ATTENDED").length +
+    classSession.walkInParticipants.filter((w) => w.status === "ATTENDED").length
+  const absentCount =
+    classSession.reservations.filter((r) => r.status === "NO_SHOW").length +
+    classSession.walkInParticipants.filter((w) => w.status === "NO_SHOW").length
+
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const sessionDate = new Date(classSession.startAt)
+  sessionDate.setHours(0, 0, 0, 0)
+  const isPastOrToday = sessionDate <= today
 
   const sourceLabels: Record<string, string> = {
     CLASSPASS: "ClassPass",
@@ -86,9 +101,14 @@ export default async function TeacherSessionPage({ params }: PageProps) {
     OTHER: "Autre",
   }
 
+  const statusColors = {
+    BOOKED: "bg-tempo-taupe/10",
+    ATTENDED: "bg-green-50 border-l-4 border-green-500",
+    NO_SHOW: "bg-red-50 border-l-4 border-red-500",
+  }
+
   return (
     <div className="space-y-8">
-      {/* Header */}
       <div className="flex items-center gap-4">
         <Button asChild variant="ghost" size="icon">
           <Link href="/teacher/planning">
@@ -105,7 +125,6 @@ export default async function TeacherSessionPage({ params }: PageProps) {
         </div>
       </div>
 
-      {/* Session Info */}
       <div className="grid md:grid-cols-3 gap-4">
         <Card>
           <CardContent className="pt-6">
@@ -148,18 +167,39 @@ export default async function TeacherSessionPage({ params }: PageProps) {
         </Card>
       </div>
 
-      {/* Participants */}
       <Card>
         <CardHeader>
-          <CardTitle>Liste des élèves</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <ClipboardList className="h-5 w-5 text-tempo-bordeaux" />
+            Émargement
+          </CardTitle>
           <CardDescription>
-            {totalParticipants} participant{totalParticipants > 1 ? "s" : ""} inscrit{totalParticipants > 1 ? "s" : ""}
+            {isPastOrToday
+              ? "Cliquez sur Présent ou No-show pour chaque participant"
+              : "L'émargement sera disponible le jour du cours"}
             {walkInCount > 0 && (
               <span className="ml-2 text-purple-600">
                 (dont {walkInCount} ajout{walkInCount > 1 ? "s" : ""} manuel{walkInCount > 1 ? "s" : ""})
               </span>
             )}
           </CardDescription>
+
+          {totalParticipants > 0 && (
+            <div className="flex gap-4 mt-4">
+              <div className="flex items-center gap-2 text-sm">
+                <div className="w-3 h-3 rounded-full bg-gray-300" />
+                <span>En attente: {bookedCount}</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <div className="w-3 h-3 rounded-full bg-green-500" />
+                <span>Présents: {presentCount}</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <div className="w-3 h-3 rounded-full bg-red-500" />
+                <span>Absents: {absentCount}</span>
+              </div>
+            </div>
+          )}
         </CardHeader>
         <CardContent>
           {totalParticipants === 0 ? (
@@ -169,15 +209,26 @@ export default async function TeacherSessionPage({ params }: PageProps) {
             </div>
           ) : (
             <div className="space-y-3">
-              {/* Regular reservations */}
               {classSession.reservations.map((reservation, index) => (
                 <div
                   key={reservation.id}
-                  className="flex items-center justify-between p-4 rounded-lg bg-tempo-taupe/10"
+                  className={`flex items-center justify-between p-4 rounded-lg ${statusColors[reservation.status as keyof typeof statusColors] || "bg-tempo-taupe/10"}`}
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-8 h-8 rounded-full bg-tempo-bordeaux text-tempo-creme flex items-center justify-center text-sm font-semibold">
-                      {index + 1}
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
+                      reservation.status === "ATTENDED"
+                        ? "bg-green-600 text-white"
+                        : reservation.status === "NO_SHOW"
+                        ? "bg-red-600 text-white"
+                        : "bg-tempo-bordeaux text-tempo-creme"
+                    }`}>
+                      {reservation.status === "ATTENDED" ? (
+                        <Check className="h-4 w-4" />
+                      ) : reservation.status === "NO_SHOW" ? (
+                        <X className="h-4 w-4" />
+                      ) : (
+                        index + 1
+                      )}
                     </div>
                     <div>
                       <p className="font-semibold">
@@ -194,18 +245,53 @@ export default async function TeacherSessionPage({ params }: PageProps) {
                       </p>
                     </div>
                   </div>
+
+                  {isPastOrToday ? (
+                    <AttendanceButtons
+                      reservationId={reservation.id}
+                      currentStatus={reservation.status as "BOOKED" | "ATTENDED" | "NO_SHOW"}
+                    />
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <Button size="sm" variant="outline" className="text-green-600 border-green-200" disabled>
+                        <Check className="h-4 w-4 mr-1" />
+                        Présent
+                      </Button>
+                      <Button size="sm" variant="outline" className="text-red-600 border-red-200" disabled>
+                        <X className="h-4 w-4 mr-1" />
+                        No-show
+                      </Button>
+                    </div>
+                  )}
                 </div>
               ))}
 
-              {/* Walk-in participants */}
-              {classSession.walkInParticipants?.map((walkIn, index) => (
+              {classSession.walkInParticipants?.map((walkIn) => (
                 <div
                   key={walkIn.id}
-                  className="flex items-center justify-between p-4 rounded-lg bg-purple-50 border-l-4 border-purple-400"
+                  className={`flex items-center justify-between p-4 rounded-lg ${
+                    walkIn.status === "ATTENDED"
+                      ? "bg-green-50 border-l-4 border-green-500"
+                      : walkIn.status === "NO_SHOW"
+                      ? "bg-red-50 border-l-4 border-red-500"
+                      : "bg-purple-50 border-l-4 border-purple-400"
+                  }`}
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-8 h-8 rounded-full bg-purple-500 text-white flex items-center justify-center">
-                      <UserPlus className="h-4 w-4" />
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                      walkIn.status === "ATTENDED"
+                        ? "bg-green-600 text-white"
+                        : walkIn.status === "NO_SHOW"
+                        ? "bg-red-600 text-white"
+                        : "bg-purple-500 text-white"
+                    }`}>
+                      {walkIn.status === "ATTENDED" ? (
+                        <Check className="h-4 w-4" />
+                      ) : walkIn.status === "NO_SHOW" ? (
+                        <X className="h-4 w-4" />
+                      ) : (
+                        <UserPlus className="h-4 w-4" />
+                      )}
                     </div>
                     <div>
                       <p className="font-semibold flex items-center gap-2">
@@ -219,6 +305,24 @@ export default async function TeacherSessionPage({ params }: PageProps) {
                       </p>
                     </div>
                   </div>
+
+                  {isPastOrToday ? (
+                    <WalkInAttendanceButtons
+                      walkInId={walkIn.id}
+                      currentStatus={walkIn.status as "BOOKED" | "ATTENDED" | "NO_SHOW"}
+                    />
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <Button size="sm" variant="outline" className="text-green-600 border-green-200" disabled>
+                        <Check className="h-4 w-4 mr-1" />
+                        Présent
+                      </Button>
+                      <Button size="sm" variant="outline" className="text-red-600 border-red-200" disabled>
+                        <X className="h-4 w-4 mr-1" />
+                        No-show
+                      </Button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

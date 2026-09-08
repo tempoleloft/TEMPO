@@ -45,7 +45,7 @@ export default function StudioPage() {
             </div>
             <div className="rounded-lg overflow-hidden aspect-square">
               <img 
-                src="/studio.png" 
+                src="/studio.jpg" 
                 alt="Studio Tempo - Le Loft"
                 className="w-full h-full object-cover"
               />
@@ -80,16 +80,16 @@ export default function StudioPage() {
             
             <div className="bg-white rounded-lg p-8 shadow-sm">
               <h3 className="text-xl font-semibold text-tempo-bordeaux mb-4">
-                Espace détente
+                Coffee shop
               </h3>
               <p className="text-muted-foreground mb-4">
                 Un coin cosy pour vous accueillir avant et après vos cours.
                 Profitez d un moment de calme dans une ambiance chaleureuse.
               </p>
               <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Coin tisane et infusions</li>
-                <li>• Vestiaires</li>
-                <li>• Casiers sécurisés</li>
+                <li>• Café</li>
+                <li>• Matcha</li>
+                <li>• Boissons signatures</li>
               </ul>
             </div>
           </div>

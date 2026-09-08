@@ -20,6 +20,7 @@ export default async function AdminDashboard() {
     totalTeachers,
     sessionsThisWeek,
     reservationsThisWeek,
+    walkInsThisWeek,
     revenueThisMonth,
     upcomingSessions,
   ] = await Promise.all([
@@ -34,6 +35,14 @@ export default async function AdminDashboard() {
     db.reservation.count({
       where: {
         status: "BOOKED",
+        session: {
+          startAt: { gte: weekStart, lte: weekEnd },
+        },
+      },
+    }),
+    db.walkInParticipant.count({
+      where: {
+        status: { not: "CANCELLED" },
         session: {
           startAt: { gte: weekStart, lte: weekEnd },
         },
@@ -58,6 +67,10 @@ export default async function AdminDashboard() {
         teacher: true,
         reservations: {
           where: { status: "BOOKED" },
+          include: { guestReservations: true },
+        },
+        walkInParticipants: {
+          where: { status: { not: "CANCELLED" } },
         },
       },
       orderBy: { startAt: "asc" },
@@ -66,6 +79,15 @@ export default async function AdminDashboard() {
   ])
 
   const monthlyRevenue = (revenueThisMonth._sum.amountCents || 0) / 100
+  const totalBookingsThisWeek = reservationsThisWeek + walkInsThisWeek
+
+  const getSessionBookedCount = (session: (typeof upcomingSessions)[number]) => {
+    const guestCount = session.reservations.reduce(
+      (sum, r) => sum + (r.guestReservations?.length || 0),
+      0
+    )
+    return session.reservations.length + guestCount + session.walkInParticipants.length
+  }
 
   return (
     <div className="space-y-8">
@@ -137,7 +159,7 @@ export default async function AdminDashboard() {
               {sessionsThisWeek}
             </div>
             <p className="text-xs text-muted-foreground">
-              {reservationsThisWeek} réservations
+              {totalBookingsThisWeek} réservations
             </p>
           </CardContent>
         </Card>
@@ -179,7 +201,9 @@ export default async function AdminDashboard() {
             </div>
           ) : (
             <div className="space-y-3">
-              {upcomingSessions.map((session) => (
+              {upcomingSessions.map((session) => {
+                const bookedCount = getSessionBookedCount(session)
+                return (
                 <Link
                   key={session.id}
                   href={`/admin/session/${session.id}`}
@@ -211,19 +235,19 @@ export default async function AdminDashboard() {
                     </div>
                     <Badge 
                       variant={
-                        session.reservations.length >= session.capacity 
+                        bookedCount >= session.capacity 
                           ? "destructive" 
-                          : session.reservations.length >= session.capacity * 0.8
+                          : bookedCount >= session.capacity * 0.8
                           ? "default"
                           : "secondary"
                       }
                       className="min-w-[50px] sm:min-w-[60px] justify-center"
                     >
-                      {session.reservations.length}/{session.capacity}
+                      {bookedCount}/{session.capacity}
                     </Badge>
                   </div>
                 </Link>
-              ))}
+              )})}
               <div className="text-center pt-2">
                 <Button asChild variant="ghost" className="text-tempo-bordeaux">
                   <Link href="/admin/planning">Voir le planning complet</Link>

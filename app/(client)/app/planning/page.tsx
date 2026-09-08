@@ -52,6 +52,9 @@ export default async function ClientPlanningPage({ searchParams }: PageProps) {
           where: { status: "WAITING" },
           orderBy: { position: "asc" },
         },
+        walkInParticipants: {
+          where: { status: { not: "CANCELLED" } },
+        },
       },
       orderBy: { startAt: "asc" },
     }),
@@ -166,7 +169,8 @@ export default async function ClientPlanningPage({ searchParams }: PageProps) {
                     (acc, r) => acc + (r.guestReservations?.length || 0),
                     0
                   )
-                  const totalBooked = classSession.reservations.length + guestCount
+                  const walkInCount = classSession.walkInParticipants?.length || 0
+                  const totalBooked = classSession.reservations.length + guestCount + walkInCount
                   const spotsLeft = classSession.capacity - totalBooked
                   const isFull = spotsLeft <= 0
                   const isBooked = reservedSessionIds.has(classSession.id)

@@ -5,22 +5,22 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Check, X, Loader2 } from "lucide-react"
 
-interface AttendanceButtonsProps {
-  reservationId: string
+interface WalkInAttendanceButtonsProps {
+  walkInId: string
   currentStatus: "BOOKED" | "ATTENDED" | "NO_SHOW"
 }
 
-export function AttendanceButtons({ reservationId, currentStatus }: AttendanceButtonsProps) {
+export function WalkInAttendanceButtons({ walkInId, currentStatus }: WalkInAttendanceButtonsProps) {
   const router = useRouter()
   const [loading, setLoading] = useState<string | null>(null)
 
-  const handleAttendance = async (status: "ATTENDED" | "NO_SHOW") => {
+  const handleAttendance = async (status: "ATTENDED" | "NO_SHOW" | "BOOKED") => {
     setLoading(status)
     try {
-      const res = await fetch("/api/admin/reservation/attendance", {
+      const res = await fetch("/api/admin/walkin/attendance", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reservationId, status }),
+        body: JSON.stringify({ walkInId, status }),
       })
 
       if (res.ok) {

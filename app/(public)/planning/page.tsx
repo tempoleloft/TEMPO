@@ -24,7 +24,7 @@ export default async function PublicPlanningPage({ searchParams }: PageProps) {
   
   const days = eachDayOfInterval({ start: weekStart, end: weekEnd })
 
-  // Get sessions for this week (include guest reservations for accurate count)
+  // Get sessions for this week (include guest reservations and walk-ins for accurate count)
   const sessions = await db.session.findMany({
     where: {
       status: "SCHEDULED",
@@ -43,6 +43,9 @@ export default async function PublicPlanningPage({ searchParams }: PageProps) {
         include: {
           guestReservations: true,
         },
+      },
+      walkInParticipants: {
+        where: { status: { not: "CANCELLED" } },
       },
     },
     orderBy: { startAt: "asc" },
@@ -122,7 +125,8 @@ export default async function PublicPlanningPage({ searchParams }: PageProps) {
                       (acc, r) => acc + (r.guestReservations?.length || 0),
                       0
                     )
-                    const totalBooked = session.reservations.length + guestCount
+                    const walkInCount = session.walkInParticipants?.length || 0
+                    const totalBooked = session.reservations.length + guestCount + walkInCount
                     const spotsLeft = session.capacity - totalBooked
                     const isFull = spotsLeft <= 0
                     

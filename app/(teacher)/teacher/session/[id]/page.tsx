@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { format } from "date-fns"
 import { fr } from "date-fns/locale"
-import { Clock, MapPin, Users, ArrowLeft } from "lucide-react"
+import { Clock, MapPin, Users, ArrowLeft, UserPlus } from "lucide-react"
 import Link from "next/link"
 
 interface PageProps {
@@ -48,8 +48,13 @@ export default async function TeacherSessionPage({ params }: PageProps) {
               clientProfile: true,
             },
           },
+          guestReservations: true,
         },
         orderBy: { bookedAt: "asc" },
+      },
+      walkInParticipants: {
+        where: { status: { not: "CANCELLED" } },
+        orderBy: { createdAt: "asc" },
       },
     },
   })
@@ -61,6 +66,24 @@ export default async function TeacherSessionPage({ params }: PageProps) {
   // Check if this teacher owns this session
   if (classSession.teacherId !== teacherProfile.id) {
     redirect("/teacher")
+  }
+
+  // Calculate totals
+  const guestCount = classSession.reservations.reduce(
+    (acc, r) => acc + (r.guestReservations?.length || 0),
+    0
+  )
+  const walkInCount = classSession.walkInParticipants?.length || 0
+  const totalParticipants = classSession.reservations.length + guestCount + walkInCount
+
+  const sourceLabels: Record<string, string> = {
+    CLASSPASS: "ClassPass",
+    GYMLIB: "Gymlib",
+    LASTSPOT: "Lastspot",
+    WALK_IN: "Walk-in",
+    INSTAGRAM: "Instagram",
+    WORD_OF_MOUTH: "Bouche à oreille",
+    OTHER: "Autre",
   }
 
   return (
@@ -117,7 +140,7 @@ export default async function TeacherSessionPage({ params }: PageProps) {
               <div>
                 <p className="text-sm text-muted-foreground">Inscrits</p>
                 <p className="font-semibold">
-                  {classSession.reservations.length}/{classSession.capacity}
+                  {totalParticipants}/{classSession.capacity}
                 </p>
               </div>
             </div>
@@ -130,17 +153,23 @@ export default async function TeacherSessionPage({ params }: PageProps) {
         <CardHeader>
           <CardTitle>Liste des élèves</CardTitle>
           <CardDescription>
-            {classSession.reservations.length} participant{classSession.reservations.length > 1 ? "s" : ""} inscrit{classSession.reservations.length > 1 ? "s" : ""}
+            {totalParticipants} participant{totalParticipants > 1 ? "s" : ""} inscrit{totalParticipants > 1 ? "s" : ""}
+            {walkInCount > 0 && (
+              <span className="ml-2 text-purple-600">
+                (dont {walkInCount} ajout{walkInCount > 1 ? "s" : ""} manuel{walkInCount > 1 ? "s" : ""})
+              </span>
+            )}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {classSession.reservations.length === 0 ? (
+          {totalParticipants === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>Aucun élève inscrit pour le moment</p>
             </div>
           ) : (
             <div className="space-y-3">
+              {/* Regular reservations */}
               {classSession.reservations.map((reservation, index) => (
                 <div
                   key={reservation.id}
@@ -154,9 +183,39 @@ export default async function TeacherSessionPage({ params }: PageProps) {
                       <p className="font-semibold">
                         {reservation.user.clientProfile?.firstName}{" "}
                         {reservation.user.clientProfile?.lastName}
+                        {reservation.guestReservations && reservation.guestReservations.length > 0 && (
+                          <Badge variant="secondary" className="ml-2 text-xs">
+                            +{reservation.guestReservations.length} invité{reservation.guestReservations.length > 1 ? "s" : ""}
+                          </Badge>
+                        )}
                       </p>
                       <p className="text-sm text-muted-foreground">
                         Inscrit le {format(reservation.bookedAt, "d MMM à HH:mm", { locale: fr })}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {/* Walk-in participants */}
+              {classSession.walkInParticipants?.map((walkIn, index) => (
+                <div
+                  key={walkIn.id}
+                  className="flex items-center justify-between p-4 rounded-lg bg-purple-50 border-l-4 border-purple-400"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-8 h-8 rounded-full bg-purple-500 text-white flex items-center justify-center">
+                      <UserPlus className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="font-semibold flex items-center gap-2">
+                        {walkIn.firstName} {walkIn.lastName}
+                        <Badge variant="outline" className="text-xs border-purple-400 text-purple-600">
+                          {sourceLabels[walkIn.source] || walkIn.source}
+                        </Badge>
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Ajouté manuellement
                       </p>
                     </div>
                   </div>

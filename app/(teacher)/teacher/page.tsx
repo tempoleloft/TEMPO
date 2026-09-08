@@ -40,11 +40,23 @@ export default async function TeacherDashboard() {
       classType: true,
       reservations: {
         where: { status: "BOOKED" },
+        include: { guestReservations: true },
+      },
+      walkInParticipants: {
+        where: { status: { not: "CANCELLED" } },
       },
     },
     orderBy: { startAt: "asc" },
     take: 10,
   })
+
+  const getSessionBookedCount = (session: (typeof upcomingSessions)[number]) => {
+    const guestCount = session.reservations.reduce(
+      (sum, r) => sum + (r.guestReservations?.length || 0),
+      0
+    )
+    return session.reservations.length + guestCount + session.walkInParticipants.length
+  }
 
   // Stats
   const totalSessionsThisWeek = await db.session.count({
@@ -58,18 +70,31 @@ export default async function TeacherDashboard() {
     },
   })
 
-  const totalStudentsThisWeek = await db.reservation.count({
-    where: {
-      status: "BOOKED",
-      session: {
-        teacherId: teacherProfile.id,
-        startAt: {
-          gte: new Date(),
-          lte: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+  const weekStart = new Date()
+  const weekEnd = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+
+  const [reservationsThisWeek, walkInsThisWeek] = await Promise.all([
+    db.reservation.count({
+      where: {
+        status: "BOOKED",
+        session: {
+          teacherId: teacherProfile.id,
+          startAt: { gte: weekStart, lte: weekEnd },
         },
       },
-    },
-  })
+    }),
+    db.walkInParticipant.count({
+      where: {
+        status: { not: "CANCELLED" },
+        session: {
+          teacherId: teacherProfile.id,
+          startAt: { gte: weekStart, lte: weekEnd },
+        },
+      },
+    }),
+  ])
+
+  const totalStudentsThisWeek = reservationsThisWeek + walkInsThisWeek
 
   return (
     <div className="space-y-8">
@@ -130,7 +155,9 @@ export default async function TeacherDashboard() {
             </div>
           ) : (
             <div className="space-y-4">
-              {upcomingSessions.map((session) => (
+              {upcomingSessions.map((session) => {
+                const bookedCount = getSessionBookedCount(session)
+                return (
                 <Link
                   key={session.id}
                   href={`/teacher/session/${session.id}`}
@@ -161,14 +188,14 @@ export default async function TeacherDashboard() {
                       </p>
                     </div>
                     <Badge 
-                      variant={session.reservations.length >= session.capacity ? "destructive" : "secondary"}
+                      variant={bookedCount >= session.capacity ? "destructive" : "secondary"}
                       className="min-w-[60px] justify-center"
                     >
-                      {session.reservations.length}/{session.capacity}
+                      {bookedCount}/{session.capacity}
                     </Badge>
                   </div>
                 </Link>
-              ))}
+              )})}
             </div>
           )}
         </CardContent>

@@ -53,6 +53,12 @@ export default async function TeacherPlanningPage({ searchParams }: PageProps) {
       classType: true,
       reservations: {
         where: { status: "BOOKED" },
+        include: {
+          guestReservations: true,
+        },
+      },
+      walkInParticipants: {
+        where: { status: { not: "CANCELLED" } },
       },
     },
     orderBy: { startAt: "asc" },
@@ -116,55 +122,64 @@ export default async function TeacherPlanningPage({ searchParams }: PageProps) {
               </div>
             ) : (
               <div className="divide-y">
-                {sessions.map((classSession) => (
-                  <Link
-                    key={classSession.id}
-                    href={`/teacher/session/${classSession.id}`}
-                    className="p-4 flex items-center justify-between hover:bg-tempo-taupe/10 transition-colors block"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div 
-                        className="w-1 h-14 rounded-full"
-                        style={{ backgroundColor: classSession.classType.colorTag || "#42101B" }}
-                      />
-                      <div>
-                        <p className="font-semibold text-tempo-bordeaux">
-                          {classSession.classType.title}
-                          {classSession.status === "CANCELLED" && (
-                            <Badge variant="destructive" className="ml-2">Annulé</Badge>
-                          )}
-                        </p>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {format(classSession.startAt, "HH:mm")} - {format(classSession.endAt, "HH:mm")}
-                          </span>
-                          {classSession.location && (
+                {sessions.map((classSession) => {
+                  const guestCount = classSession.reservations.reduce(
+                    (acc, r) => acc + (r.guestReservations?.length || 0),
+                    0
+                  )
+                  const walkInCount = classSession.walkInParticipants?.length || 0
+                  const totalBooked = classSession.reservations.length + guestCount + walkInCount
+                  
+                  return (
+                    <Link
+                      key={classSession.id}
+                      href={`/teacher/session/${classSession.id}`}
+                      className="p-4 flex items-center justify-between hover:bg-tempo-taupe/10 transition-colors block"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div 
+                          className="w-1 h-14 rounded-full"
+                          style={{ backgroundColor: classSession.classType.colorTag || "#42101B" }}
+                        />
+                        <div>
+                          <p className="font-semibold text-tempo-bordeaux">
+                            {classSession.classType.title}
+                            {classSession.status === "CANCELLED" && (
+                              <Badge variant="destructive" className="ml-2">Annulé</Badge>
+                            )}
+                          </p>
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
                             <span className="flex items-center gap-1">
-                              <MapPin className="h-3 w-3" />
-                              {classSession.location}
+                              <Clock className="h-3 w-3" />
+                              {format(classSession.startAt, "HH:mm")} - {format(classSession.endAt, "HH:mm")}
                             </span>
-                          )}
+                            {classSession.location && (
+                              <span className="flex items-center gap-1">
+                                <MapPin className="h-3 w-3" />
+                                {classSession.location}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-2">
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                        <Badge 
-                          variant={
-                            classSession.reservations.length >= classSession.capacity 
-                              ? "destructive" 
-                              : "secondary"
-                          }
-                        >
-                          {classSession.reservations.length}/{classSession.capacity}
-                        </Badge>
+                      
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2">
+                          <Users className="h-4 w-4 text-muted-foreground" />
+                          <Badge 
+                            variant={
+                              totalBooked >= classSession.capacity 
+                                ? "destructive" 
+                                : "secondary"
+                            }
+                          >
+                            {totalBooked}/{classSession.capacity}
+                          </Badge>
+                        </div>
                       </div>
-                    </div>
-                  </Link>
-                ))}
+                    </Link>
+                  )
+                })}
               </div>
             )}
           </div>

@@ -143,10 +143,6 @@ export default async function Home() {
           </div>
         </div>
 
-        {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 opacity-50 hidden sm:block">
-          <div className="w-[1px] h-16 bg-tempo-creme/50 animate-pulse" />
-        </div>
       </section>
 
       {/* Values Section */}

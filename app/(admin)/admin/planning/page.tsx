@@ -38,6 +38,9 @@ export default async function AdminPlanningPage({ searchParams }: PageProps) {
           guestReservations: true,
         },
       },
+      walkInParticipants: {
+        where: { status: { not: "CANCELLED" } },
+      },
     },
     orderBy: { startAt: "asc" },
   })
@@ -117,7 +120,8 @@ export default async function AdminPlanningPage({ searchParams }: PageProps) {
                     (acc, r) => acc + (r.guestReservations?.length || 0),
                     0
                   )
-                  const totalBooked = session.reservations.length + guestCount
+                  const walkInCount = session.walkInParticipants?.length || 0
+                  const totalBooked = session.reservations.length + guestCount + walkInCount
                   const spotsLeft = session.capacity - totalBooked
                   const fillRate = (totalBooked / session.capacity) * 100
                   

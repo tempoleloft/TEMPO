@@ -1,6 +1,3 @@
-// Tempo – Le Loft
-// Prisma Schema for Yoga/Pilates Studio Management
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,9 +7,378 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ============================================================================
-// ENUMS
-// ============================================================================
+model User {
+  id                  String               @id @default(cuid())
+  email               String               @unique
+  passwordHash        String?
+  emailVerified       DateTime?
+  role                Role                 @default(CLIENT)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  image               String?
+  name                String?
+  blacklistReason     String?
+  blacklistedAt       DateTime?
+  isBlacklisted       Boolean              @default(false)
+  lastLogin           DateTime?
+  accounts            Account[]
+  sessions            AuthSession[]
+  clientProfile       ClientProfile?
+  creditLedger        CreditLedger[]
+  memberships         Membership[]
+  passwordResetTokens PasswordResetToken[]
+  purchases           Purchase[]
+  reservations        Reservation[]
+  sessionsCreated     Session[]            @relation("CreatedBy")
+  teacherProfile      TeacherProfile?
+  waitlistEntries     WaitlistEntry[]
+  WalkInParticipant   WalkInParticipant[]
+  wallet              Wallet?
+
+  @@index([email])
+  @@index([role])
+}
+
+model ClientProfile {
+  id               String    @id @default(cuid())
+  userId           String    @unique
+  firstName        String
+  lastName         String
+  phone            String
+  birthdate        DateTime?
+  notes            String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  newsletterOptOut Boolean   @default(false)
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model TeacherProfile {
+  id          String    @id @default(cuid())
+  userId      String    @unique
+  displayName String
+  bio         String?
+  photoUrl    String?
+  specialties String[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  isActive    Boolean   @default(true)
+  sessions    Session[]
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([isActive])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model AuthSession {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expires   DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+}
+
+model WaitlistEntry {
+  id         String         @id @default(cuid())
+  sessionId  String
+  userId     String
+  position   Int
+  status     WaitlistStatus @default(WAITING)
+  token      String?        @unique
+  notifiedAt DateTime?
+  expiresAt  DateTime?
+  acceptedAt DateTime?
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+  session    Session        @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, userId])
+  @@index([sessionId, status])
+  @@index([status, expiresAt])
+}
+
+model ClassType {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  durationMin Int       @default(60)
+  level       String?
+  colorTag    String?
+  active      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  sessions    Session[]
+
+  @@index([active])
+}
+
+model Session {
+  id                 String              @id @default(cuid())
+  classTypeId        String
+  teacherId          String
+  startAt            DateTime
+  endAt              DateTime
+  capacity           Int                 @default(12)
+  location           String?
+  status             SessionStatus       @default(SCHEDULED)
+  notes              String?
+  createdById        String?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  level              String?
+  reservations       Reservation[]
+  classType          ClassType           @relation(fields: [classTypeId], references: [id])
+  createdBy          User?               @relation("CreatedBy", fields: [createdById], references: [id])
+  teacher            TeacherProfile      @relation(fields: [teacherId], references: [id])
+  waitlist           WaitlistEntry[]
+  walkInParticipants WalkInParticipant[]
+
+  @@index([startAt])
+  @@index([teacherId])
+  @@index([status])
+  @@index([classTypeId, startAt])
+}
+
+model Reservation {
+  id                        String             @id @default(cuid())
+  sessionId                 String
+  userId                    String
+  status                    ReservationStatus  @default(BOOKED)
+  bookedAt                  DateTime           @default(now())
+  cancelledAt               DateTime?
+  cancellationPolicyApplied Boolean            @default(false)
+  creditLedgerId            String?            @unique
+  attendedAt                DateTime?
+  createdAt                 DateTime           @default(now())
+  updatedAt                 DateTime           @updatedAt
+  guestReservations         GuestReservation[]
+  creditLedger              CreditLedger?      @relation(fields: [creditLedgerId], references: [id])
+  session                   Session            @relation(fields: [sessionId], references: [id])
+  user                      User               @relation(fields: [userId], references: [id])
+
+  @@unique([sessionId, userId])
+  @@index([userId])
+  @@index([sessionId])
+  @@index([status])
+}
+
+model GuestReservation {
+  id             String        @id @default(cuid())
+  reservationId  String
+  guestFirstName String
+  guestLastName  String
+  creditLedgerId String?       @unique
+  createdAt      DateTime      @default(now())
+  guestEmail     String?
+  creditLedger   CreditLedger? @relation(fields: [creditLedgerId], references: [id])
+  reservation    Reservation   @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+
+  @@index([reservationId])
+}
+
+model Product {
+  id            String      @id @default(cuid())
+  name          String
+  description   String?
+  kind          ProductKind
+  credits       Int         @default(0)
+  priceCents    Int
+  currency      String      @default("EUR")
+  stripePriceId String?     @unique
+  validityDays  Int?
+  active        Boolean     @default(true)
+  sortOrder     Int         @default(0)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  imageUrl      String?
+  featured      Boolean     @default(false)
+  isHidden      Boolean     @default(false)
+  unlockCode    String?
+  purchases     Purchase[]
+
+  @@index([active])
+  @@index([kind])
+}
+
+model Purchase {
+  id                      String         @id @default(cuid())
+  userId                  String
+  productId               String
+  stripeCheckoutSessionId String?        @unique
+  stripePaymentIntentId   String?
+  amountCents             Int
+  currency                String         @default("EUR")
+  status                  PurchaseStatus @default(PENDING)
+  creditsGranted          Int            @default(0)
+  expiresAt               DateTime?
+  createdAt               DateTime       @default(now())
+  updatedAt               DateTime       @updatedAt
+  product                 Product        @relation(fields: [productId], references: [id])
+  user                    User           @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@index([stripeCheckoutSessionId])
+}
+
+model Wallet {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  creditsBalance Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model CreditLedger {
+  id               String            @id @default(cuid())
+  userId           String
+  delta            Int
+  reason           CreditReason
+  refType          String?
+  refId            String?
+  notes            String?
+  createdAt        DateTime          @default(now())
+  user             User              @relation(fields: [userId], references: [id])
+  guestReservation GuestReservation?
+  reservation      Reservation?
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([refType, refId])
+}
+
+model Settings {
+  id                  String   @id @default("default")
+  cancelHoursBefore   Int      @default(12)
+  maxWaitlistSize     Int      @default(3)
+  defaultCapacity     Int      @default(12)
+  reminderEnabled     Boolean  @default(false)
+  reminderHoursBefore Int      @default(24)
+  updatedAt           DateTime @updatedAt
+}
+
+model CafeMenuItem {
+  id          String   @id @default(cuid())
+  name        String
+  price       Decimal  @db.Decimal(10, 2)
+  description String?
+  category    String
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  imageUrl    String?
+
+  @@index([category])
+  @@index([isActive])
+}
+
+model MembershipPlan {
+  id                 String                @id @default(cuid())
+  name               String
+  description        String?
+  creditsPerMonth    Int
+  priceCentsPerMonth Int
+  commitmentMonths   Int
+  renewalType        MembershipRenewalType
+  promoFreeMonths    Int?
+  promoBonusCredits  Int?
+  stripePriceId      String?               @unique
+  stripeProductId    String?
+  isActive           Boolean               @default(true)
+  sortOrder          Int                   @default(0)
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  memberships        Membership[]
+
+  @@index([isActive])
+}
+
+model Membership {
+  id                   String           @id @default(cuid())
+  userId               String
+  planId               String
+  startDate            DateTime
+  currentPeriodStart   DateTime
+  currentPeriodEnd     DateTime
+  commitmentEndDate    DateTime
+  creditsExpiryDate    DateTime
+  status               MembershipStatus @default(ACTIVE)
+  cancelledAt          DateTime?
+  cancelAtPeriodEnd    Boolean          @default(false)
+  stripeSubscriptionId String?          @unique
+  stripeCustomerId     String?
+  totalCreditsGranted  Int              @default(0)
+  monthsCompleted      Int              @default(0)
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+  plan                 MembershipPlan   @relation(fields: [planId], references: [id])
+  user                 User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([stripeSubscriptionId])
+}
+
+model WalkInParticipant {
+  id                String            @id @default(cuid())
+  sessionId         String
+  firstName         String
+  lastName          String
+  email             String?
+  phone             String?
+  source            AcquisitionSource @default(WALK_IN)
+  notes             String?
+  status            ReservationStatus @default(BOOKED)
+  attendedAt        DateTime?
+  createdAt         DateTime          @default(now())
+  createdById       String?
+  numeroReservation String?
+  User              User?             @relation(fields: [createdById], references: [id])
+  session           Session           @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([source, numeroReservation])
+}
 
 enum Role {
   CLIENT
@@ -34,9 +400,9 @@ enum ReservationStatus {
 }
 
 enum ProductKind {
-  SINGLE    // Single class credit
-  PACK      // Pack of class credits
-  MERCH     // Merchandise (no credits)
+  SINGLE
+  PACK
+  MERCH
 }
 
 enum PurchaseStatus {
@@ -51,451 +417,39 @@ enum CreditReason {
   CANCEL_REFUND
   ADMIN_ADJUST
   EXPIRATION
-  MEMBERSHIP      // Crédits mensuels d'abonnement
+  MEMBERSHIP
 }
 
 enum MembershipRenewalType {
-  AUTO            // Renouvellement automatique
-  FIXED           // Durée fixe, pas de renouvellement
+  AUTO
+  FIXED
 }
 
 enum MembershipStatus {
-  ACTIVE          // Abonnement actif
-  CANCELLED       // Annulé (reste actif jusqu'à la fin de période)
-  EXPIRED         // Expiré
-  PAUSED          // En pause (si on veut cette option)
+  ACTIVE
+  CANCELLED
+  EXPIRED
+  PAUSED
 }
-
-// ============================================================================
-// USER & PROFILES
-// ============================================================================
-
-model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  passwordHash  String?
-  emailVerified DateTime?
-  role          Role      @default(CLIENT)
-  isBlacklisted Boolean   @default(false)
-  blacklistedAt DateTime?
-  blacklistReason String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  // OAuth fields (required by NextAuth PrismaAdapter)
-  name          String?
-  image         String?
-
-  // Relations
-  clientProfile  ClientProfile?
-  teacherProfile TeacherProfile?
-  reservations   Reservation[]
-  purchases      Purchase[]
-  wallet         Wallet?
-  creditLedger   CreditLedger[]
-  sessionsCreated Session[] @relation("CreatedBy")
-
-  // NextAuth
-  accounts Account[]
-  sessions AuthSession[]
-  passwordResetTokens PasswordResetToken[]
-  waitlistEntries WaitlistEntry[]
-  
-  // Membership
-  memberships Membership[]
-
-  @@index([email])
-  @@index([role])
-}
-
-model ClientProfile {
-  id        String    @id @default(cuid())
-  userId    String    @unique
-  firstName String
-  lastName  String
-  phone     String    // Obligatoire
-  birthdate DateTime?
-  notes     String?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model TeacherProfile {
-  id          String   @id @default(cuid())
-  userId      String   @unique
-  displayName String
-  bio         String?
-  photoUrl    String?
-  specialties String[] // ["Yoga", "Pilates", "Barre au Sol"]
-  isActive    Boolean  @default(true)  // Masquer/afficher le professeur
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  sessions Session[]
-
-  @@index([isActive])
-}
-
-// ============================================================================
-// NEXTAUTH MODELS
-// ============================================================================
-
-model Account {
-  id                String  @id @default(cuid())
-  userId            String
-  type              String
-  provider          String
-  providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String? @db.Text
-  session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([provider, providerAccountId])
-}
-
-model AuthSession {
-  id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
-
-  @@unique([identifier, token])
-}
-
-model PasswordResetToken {
-  id        String   @id @default(cuid())
-  userId    String
-  token     String   @unique
-  expires   DateTime
-  createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([token])
-  @@index([userId])
-}
-
-// ============================================================================
-// WAITLIST (Liste d'attente)
-// ============================================================================
 
 enum WaitlistStatus {
-  WAITING       // En attente
-  NOTIFIED      // Notifié, a 10 min pour accepter
-  ACCEPTED      // A accepté, converti en réservation
-  EXPIRED       // N'a pas répondu à temps
-  CANCELLED     // A annulé sa place en liste d'attente
+  WAITING
+  NOTIFIED
+  ACCEPTED
+  EXPIRED
+  CANCELLED
 }
 
-model WaitlistEntry {
-  id            String         @id @default(cuid())
-  sessionId     String
-  userId        String
-  position      Int            // Position dans la file (1, 2, 3)
-  status        WaitlistStatus @default(WAITING)
-  token         String?        @unique // Token pour accepter la place
-  notifiedAt    DateTime?      // Quand on a notifié l'utilisateur
-  expiresAt     DateTime?      // Date limite pour accepter (notifiedAt + 10 min)
-  acceptedAt    DateTime?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-
-  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([sessionId, userId]) // Un user ne peut être qu'une fois sur la liste d'attente par session
-  @@index([sessionId, status])
-  @@index([status, expiresAt])
-}
-
-// ============================================================================
-// CLASSES & SESSIONS
-// ============================================================================
-
-model ClassType {
-  id          String   @id @default(cuid())
-  title       String   // "Yoga Vinyasa", "Pilates Mat", "Barre au Sol"
-  description String?
-  durationMin Int      @default(60)
-  level       String?  // "Tous niveaux", "Débutant", "Intermédiaire", "Avancé"
-  colorTag    String?  // Hex color for UI
-  active      Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  sessions Session[]
-
-  @@index([active])
-}
-
-model Session {
-  id          String        @id @default(cuid())
-  classTypeId String
-  teacherId   String
-  startAt     DateTime
-  endAt       DateTime
-  capacity    Int           @default(12)
-  location    String?       // "Salle principale", "Studio"
-  level       String?       // "Tous niveaux", "Débutant", "Intermédiaire", "Avancé"
-  status      SessionStatus @default(SCHEDULED)
-  notes       String?
-  createdById String?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-
-  classType    ClassType       @relation(fields: [classTypeId], references: [id])
-  teacher      TeacherProfile  @relation(fields: [teacherId], references: [id])
-  createdBy    User?           @relation("CreatedBy", fields: [createdById], references: [id])
-  reservations Reservation[]
-  waitlist     WaitlistEntry[]
-
-  @@index([startAt])
-  @@index([teacherId])
-  @@index([status])
-  @@index([classTypeId, startAt])
-}
-
-// ============================================================================
-// RESERVATIONS
-// ============================================================================
-
-model Reservation {
-  id                       String            @id @default(cuid())
-  sessionId                String
-  userId                   String
-  status                   ReservationStatus @default(BOOKED)
-  bookedAt                 DateTime          @default(now())
-  cancelledAt              DateTime?
-  cancellationPolicyApplied Boolean          @default(false)
-  creditLedgerId           String?           @unique // Link to credit transaction
-  attendedAt               DateTime?
-  createdAt                DateTime          @default(now())
-  updatedAt                DateTime          @updatedAt
-
-  session           Session            @relation(fields: [sessionId], references: [id])
-  user              User               @relation(fields: [userId], references: [id])
-  creditLedger      CreditLedger?      @relation(fields: [creditLedgerId], references: [id])
-  guestReservations GuestReservation[]
-
-  @@unique([sessionId, userId]) // Prevent double booking
-  @@index([userId])
-  @@index([sessionId])
-  @@index([status])
-}
-
-model GuestReservation {
-  id             String      @id @default(cuid())
-  reservationId  String
-  guestFirstName String
-  guestLastName  String
-  guestEmail     String?
-  creditLedgerId String?     @unique
-  createdAt      DateTime    @default(now())
-
-  reservation  Reservation   @relation(fields: [reservationId], references: [id], onDelete: Cascade)
-  creditLedger CreditLedger? @relation(fields: [creditLedgerId], references: [id])
-
-  @@index([reservationId])
-}
-
-// ============================================================================
-// PRODUCTS & PURCHASES
-// ============================================================================
-
-model Product {
-  id            String      @id @default(cuid())
-  name          String      // "Cours à l'unité", "Carte 5 cours", "T-shirt", etc.
-  description   String?
-  kind          ProductKind
-  credits       Int         @default(0) // 0 for MERCH, 1 for SINGLE, 5/10 for PACK
-  priceCents    Int         // Prix en centimes (ex: 2500 = 25€)
-  currency      String      @default("EUR")
-  imageUrl      String?     // URL de l'image du produit
-  stripePriceId String?     @unique
-  validityDays  Int?        // Nombre de jours de validité (null = illimité, ignored for MERCH)
-  active        Boolean     @default(true)
-  featured      Boolean     @default(false) // "Meilleure offre" badge
-  isHidden      Boolean     @default(false) // Produit caché, accessible uniquement avec un code
-  unlockCode    String?     // Code pour débloquer le produit caché
-  sortOrder     Int         @default(0)
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-
-  purchases Purchase[]
-
-  @@index([active])
-  @@index([kind])
-}
-
-model Purchase {
-  id                      String         @id @default(cuid())
-  userId                  String
-  productId               String
-  stripeCheckoutSessionId String?        @unique
-  stripePaymentIntentId   String?
-  amountCents             Int
-  currency                String         @default("EUR")
-  status                  PurchaseStatus @default(PENDING)
-  creditsGranted          Int            @default(0)
-  expiresAt               DateTime?      // For packs with validity
-  createdAt               DateTime       @default(now())
-  updatedAt               DateTime       @updatedAt
-
-  user    User    @relation(fields: [userId], references: [id])
-  product Product @relation(fields: [productId], references: [id])
-
-  @@index([userId])
-  @@index([status])
-  @@index([stripeCheckoutSessionId])
-}
-
-// ============================================================================
-// WALLET & CREDITS
-// ============================================================================
-
-model Wallet {
-  id             String   @id @default(cuid())
-  userId         String   @unique
-  creditsBalance Int      @default(0)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model CreditLedger {
-  id        String       @id @default(cuid())
-  userId    String
-  delta     Int          // +5, -1, etc.
-  reason    CreditReason
-  refType   String?      // "Purchase", "Reservation", "Admin"
-  refId     String?      // ID of the related entity (polymorphic, no FK)
-  notes     String?
-  createdAt DateTime     @default(now())
-
-  user             User              @relation(fields: [userId], references: [id])
-  reservation      Reservation?
-  guestReservation GuestReservation?
-
-  @@index([userId])
-  @@index([createdAt])
-  @@index([refType, refId])
-}
-
-// ============================================================================
-// SETTINGS (Paramètres du studio)
-// ============================================================================
-
-model Settings {
-  id                    String   @id @default("default")
-  cancelHoursBefore     Int      @default(12)       // Délai d'annulation en heures
-  maxWaitlistSize       Int      @default(3)        // Nombre max en liste d'attente
-  defaultCapacity       Int      @default(12)       // Capacité par défaut des cours
-  reminderEnabled       Boolean  @default(false)    // Rappel 24h avant le cours
-  reminderHoursBefore   Int      @default(24)       // Heures avant pour le rappel
-  updatedAt             DateTime @updatedAt
-}
-
-// ============================================================================
-// CAFE MENU (Carte du café)
-// ============================================================================
-
-model CafeMenuItem {
-  id          String   @id @default(cuid())
-  name        String                           // Nom du produit
-  price       Decimal  @db.Decimal(10, 2)      // Prix en euros
-  description String?                          // Description optionnelle
-  category    String                           // "boissons" ou "food"
-  sortOrder   Int      @default(0)             // Ordre d'affichage
-  isActive    Boolean  @default(true)          // Visible sur la carte
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@index([category])
-  @@index([isActive])
-}
-
-// ============================================================================
-// MEMBERSHIP (Abonnements)
-// ============================================================================
-
-model MembershipPlan {
-  id                  String                @id @default(cuid())
-  name                String                // "Essentiel", "Premium", "Illimité"
-  description         String?               // Description de la formule
-  creditsPerMonth     Int                   // Nombre de crédits par mois
-  priceCentsPerMonth  Int                   // Prix mensuel en centimes
-  commitmentMonths    Int                   // Durée d'engagement minimum (2, 3, 6, 12)
-  renewalType         MembershipRenewalType // AUTO ou FIXED
-  
-  // Promo options
-  promoFreeMonths     Int?                  // Mois offerts (ex: 2 achetés = 1 offert)
-  promoBonusCredits   Int?                  // Crédits bonus à la souscription
-  
-  // Stripe
-  stripePriceId       String?               @unique
-  stripeProductId     String?
-  
-  // Settings
-  isActive            Boolean               @default(true)
-  sortOrder           Int                   @default(0)
-  createdAt           DateTime              @default(now())
-  updatedAt           DateTime              @updatedAt
-
-  memberships Membership[]
-
-  @@index([isActive])
-}
-
-model Membership {
-  id                     String           @id @default(cuid())
-  userId                 String
-  planId                 String
-  
-  // Dates
-  startDate              DateTime         // Date de début
-  currentPeriodStart     DateTime         // Début de la période actuelle
-  currentPeriodEnd       DateTime         // Fin de la période actuelle
-  commitmentEndDate      DateTime         // Fin de l'engagement minimum
-  creditsExpiryDate      DateTime         // Date d'expiration des crédits (fin + 1 mois)
-  
-  // Status
-  status                 MembershipStatus @default(ACTIVE)
-  cancelledAt            DateTime?        // Date d'annulation
-  cancelAtPeriodEnd      Boolean          @default(false) // Annuler à la fin de période
-  
-  // Stripe
-  stripeSubscriptionId   String?          @unique
-  stripeCustomerId       String?
-  
-  // Tracking
-  totalCreditsGranted    Int              @default(0) // Total crédits donnés depuis le début
-  monthsCompleted        Int              @default(0) // Nombre de mois terminés
-  
-  createdAt              DateTime         @default(now())
-  updatedAt              DateTime         @updatedAt
-
-  user User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  plan MembershipPlan @relation(fields: [planId], references: [id])
-
-  @@index([userId])
-  @@index([status])
-  @@index([stripeSubscriptionId])
+enum AcquisitionSource {
+  WALK_IN
+  INSTAGRAM
+  GOOGLE
+  WORD_OF_MOUTH
+  FLYER
+  PARTNERSHIP
+  EVENT
+  OTHER
+  CLASSPASS
+  GYMLIB
+  LASTSPOT
 }

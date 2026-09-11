@@ -5,6 +5,13 @@ import { getStripe, isStripeConfigured } from "@/lib/stripe"
 
 export const dynamic = 'force-dynamic'
 
+function getBaseUrl() {
+  return (process.env.NEXTAUTH_URL || "https://tempoleloft.com")
+    .trim()
+    .replace(/\\n$/g, "")
+    .replace(/\n$/g, "")
+}
+
 export async function POST(request: Request) {
   try {
     const stripe = getStripe()

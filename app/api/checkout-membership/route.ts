@@ -1,14 +1,21 @@
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { NextResponse } from "next/server"
-import Stripe from "stripe"
+import { getStripe, isStripeConfigured } from "@/lib/stripe"
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2024-06-20",
-})
+export const dynamic = 'force-dynamic'
 
 export async function POST(request: Request) {
   try {
+    const stripe = getStripe()
+    if (!isStripeConfigured() || !stripe) {
+      console.error("Stripe is not configured for membership checkout")
+      return NextResponse.json(
+        { error: "Le paiement n'est pas encore configuré. Contactez l'administrateur." },
+        { status: 503 }
+      )
+    }
+
     const session = await auth()
     
     if (!session?.user) {
@@ -99,8 +106,8 @@ export async function POST(request: Request) {
           type: "membership",
         },
       },
-      success_url: `${process.env.NEXTAUTH_URL}/app/compte?membership=success`,
-      cancel_url: `${process.env.NEXTAUTH_URL}/tarifs?membership=cancelled`,
+      success_url: `${getBaseUrl()}/app/compte?membership=success`,
+      cancel_url: `${getBaseUrl()}/tarifs?membership=cancelled`,
     })
 
     return NextResponse.json({ url: checkoutSession.url })

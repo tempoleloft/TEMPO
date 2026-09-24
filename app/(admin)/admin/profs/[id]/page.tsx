@@ -193,16 +193,25 @@ export default function EditTeacherPage({ params }: { params: { id: string } }) 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Photo preview */}
             <div className="flex items-center gap-6">
-              <div className="w-24 h-24 rounded-full bg-tempo-taupe/30 flex items-center justify-center overflow-hidden">
+              <div className="w-24 h-24 rounded-full bg-tempo-taupe/30 flex items-center justify-center overflow-hidden shrink-0">
                 {formData.photoUrl ? (
                   <img
+                    key={formData.photoUrl}
                     src={formData.photoUrl}
-                    alt={formData.displayName}
-                    className="w-full h-full object-cover"
+                    alt={formData.displayName || "Photo"}
+                    className="w-24 h-24 object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none"
+                      e.currentTarget.parentElement
+                        ?.querySelector("[data-photo-fallback]")
+                        ?.classList.remove("hidden")
+                    }}
                   />
-                ) : (
-                  <User className="h-10 w-10 text-tempo-bordeaux/50" />
-                )}
+                ) : null}
+                <User
+                  data-photo-fallback
+                  className={`h-10 w-10 text-tempo-bordeaux/50 ${formData.photoUrl ? "hidden" : ""}`}
+                />
               </div>
               <div className="flex-1">
                 <Label htmlFor="photoUrl">URL de la photo</Label>
@@ -210,11 +219,11 @@ export default function EditTeacherPage({ params }: { params: { id: string } }) 
                   id="photoUrl"
                   value={formData.photoUrl}
                   onChange={(e) => setFormData({ ...formData, photoUrl: e.target.value })}
-                  placeholder="https://exemple.com/photo.jpg"
+                  placeholder="/valentine.jpg ou https://..."
                   className="mt-1"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Laissez vide pour utiliser les initiales
+                  Chemin local (ex: /valentine.jpg) ou URL complète. Laissez vide pour les initiales.
                 </p>
               </div>
             </div>

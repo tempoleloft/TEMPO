@@ -115,7 +115,7 @@ export async function toggleMembershipPlanActive(planId: string) {
       data: { isActive: !plan.isActive },
     })
 
-    // Update Stripe product if configured
+    // Update Stripe product if configured (does not cancel existing subscriptions)
     const stripe = getStripe()
     if (stripe && plan.stripeProductId) {
       await stripe.products.update(plan.stripeProductId, {
@@ -124,6 +124,9 @@ export async function toggleMembershipPlanActive(planId: string) {
     }
 
     revalidatePath("/admin/memberships")
+    revalidatePath("/membership")
+    revalidatePath("/tarifs")
+    revalidatePath("/app/paiements")
     return { success: true }
   } catch (error) {
     console.error("Error toggling membership plan:", error)

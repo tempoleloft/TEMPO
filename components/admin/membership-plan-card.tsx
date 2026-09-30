@@ -5,8 +5,7 @@ import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Switch } from "@/components/ui/switch"
-import { CreditCard, Users, Calendar, Gift, RefreshCw, Clock, MoreVertical, Trash2 } from "lucide-react"
+import { CreditCard, Users, Calendar, Gift, RefreshCw, Clock, MoreVertical, Trash2, Eye, EyeOff } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,7 +24,16 @@ export function MembershipPlanCard({ plan, membersCount }: MembershipPlanCardPro
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
-  const handleToggleActive = async () => {
+  const handleToggleVisibility = async () => {
+    if (plan.isActive) {
+      const ok = confirm(
+        "Masquer cette formule ?\n\n" +
+          "Elle ne sera plus proposée aux nouveaux clients.\n" +
+          "Les membres déjà abonnés ne sont PAS annulés et gardent leur abonnement."
+      )
+      if (!ok) return
+    }
+
     setIsLoading(true)
     await toggleMembershipPlanActive(plan.id)
     setIsLoading(false)
@@ -48,14 +56,17 @@ export function MembershipPlanCard({ plan, membersCount }: MembershipPlanCardPro
   const pricePerMonth = (plan.priceCentsPerMonth / 100).toFixed(2)
 
   return (
-    <Card className={!plan.isActive ? "opacity-60" : ""}>
+    <Card className={!plan.isActive ? "opacity-60 border-dashed" : ""}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div>
             <CardTitle className="flex items-center gap-2">
               {plan.name}
               {!plan.isActive && (
-                <Badge variant="secondary" className="text-xs">Inactif</Badge>
+                <Badge variant="secondary" className="text-xs">
+                  <EyeOff className="h-3 w-3 mr-1" />
+                  Masquée
+                </Badge>
               )}
             </CardTitle>
             {plan.description && (
@@ -69,8 +80,18 @@ export function MembershipPlanCard({ plan, membersCount }: MembershipPlanCardPro
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleToggleActive} disabled={isLoading}>
-                {plan.isActive ? "Désactiver" : "Activer"}
+              <DropdownMenuItem onClick={handleToggleVisibility} disabled={isLoading}>
+                {plan.isActive ? (
+                  <>
+                    <EyeOff className="h-4 w-4 mr-2" />
+                    Masquer
+                  </>
+                ) : (
+                  <>
+                    <Eye className="h-4 w-4 mr-2" />
+                    Afficher
+                  </>
+                )}
               </DropdownMenuItem>
               <DropdownMenuItem 
                 onClick={handleDelete} 
@@ -79,6 +100,7 @@ export function MembershipPlanCard({ plan, membersCount }: MembershipPlanCardPro
               >
                 <Trash2 className="h-4 w-4 mr-2" />
                 Supprimer
+                {membersCount > 0 && " (membres actifs)"}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -119,6 +141,12 @@ export function MembershipPlanCard({ plan, membersCount }: MembershipPlanCardPro
             <span><strong>{membersCount}</strong> membre{membersCount > 1 ? "s" : ""} actif{membersCount > 1 ? "s" : ""}</span>
           </div>
         </div>
+
+        {!plan.isActive && membersCount > 0 && (
+          <p className="text-xs text-muted-foreground border-t pt-3">
+            Formule masquée : plus proposée aux nouveaux clients, mais les {membersCount} membre{membersCount > 1 ? "s" : ""} actuel{membersCount > 1 ? "s" : ""} restent actifs.
+          </p>
+        )}
 
         {/* Promo */}
         {(plan.promoFreeMonths || plan.promoBonusCredits) && (
